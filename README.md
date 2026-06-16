@@ -136,6 +136,40 @@ El **balance por cuenta, patrimonio neto y reportes** se computan (no se guardan
 
 ---
 
+## Manual de uso: casos comunes
+
+La app tiene **dos capas** que conviene no confundir:
+
+- **Patrimonio (capa de cuentas):** suma de saldos de tus cuentas (`saldo_inicial + Σ movimientos`). Es la foto real de tu dinero/deuda. Siempre refleja todo, sin importar cómo presupuestes.
+- **Presupuesto (capa de asignación):** "Disponible para asignar" (RTA) y el saldo por categoría. Es tu plan de cómo repartir el dinero.
+
+### Empezar con deuda (patrimonio negativo)
+Al crear tus cuentas pones su **saldo real**. Si debes más de lo que tienes (tarjetas, sobregiros), tu patrimonio arranca negativo. Eso es correcto y esperado: registra los saldos reales y la app lo mostrará tal cual.
+
+### Sobregasto que se arrastra
+Si en un mes gastas más de lo que te entró, eso se refleja en:
+1. El **patrimonio**, que baja (financiaste la diferencia con deuda), y
+2. El **saldo de la categoría**, que queda **negativo y se arrastra** al mes siguiente (la lógica de saldo acumulado funciona en ambos sentidos).
+
+Ojo: sobre**gastar** no es lo mismo que sobre**asignar**. Solo asignar más de lo que entró pone "Disponible para asignar" en rojo.
+
+### Puesta al día con un ingreso extra (bono, etc.)
+Cuando entra dinero para "ponerte al día" y quieres que **resetee tanto el patrimonio como el arrastre del presupuesto**:
+
+1. Regístralo como **ingreso normal** (en una categoría de ingreso real, **no** en "Ajuste de patrimonio").
+2. Con eso:
+   - El **patrimonio** sube por el saldo de la cuenta (vuelve hacia 0). Ejemplo: empezaste en −10,000, arrastraste −1,500 de sobregasto en dos meses (patrimonio −11,500); un extra de +11,500 (más tu ingreso normal del mes) te deja el patrimonio en el valor esperado a inicio de mes.
+   - El ingreso te da saldo en **"Disponible para asignar"** para **cubrir las categorías que quedaron en rojo** (las asignas hasta dejarlas en 0) y arrancar limpio.
+3. De ahí en adelante, mantén tus gastos dentro de tu ingreso mensual (eso ya es disciplina, no app 🙂).
+
+> Aparecerá como ingreso en el reporte de ingreso vs gasto, lo cual es correcto: sí recibiste ese dinero.
+
+### "Ajuste de patrimonio" (categoría excluida) — cuándo SÍ usarla
+Úsala solo cuando quieras corregir el **patrimonio sin tocar el presupuesto ni los reportes** (p. ej. una corrección puntual de saldo, un reembolso que no es ingreso real). Un ingreso en la categoría **"Ajuste de patrimonio"** (excluida): sube el saldo de la cuenta, pero **no** cuenta en "Disponible para asignar" ni aparece en reportes. **No** sirve para tapar sobreasignación/sobregasto del presupuesto (para eso usa ingreso normal).
+
+### Ahorro / metas (sinking funds)
+Para guardar dinero hacia una meta: crea una categoría (ej. "Vacaciones") y **asígnale** monto cada mes sin gastar. La columna **Disponible (acum.)** muestra el saldo creciendo mes a mes (Q500 → Q1,000 → …). Cuando lo uses, registras el gasto contra esa categoría. Alternativamente, una **cuenta de ahorro dedicada** y mueves el dinero con **transferencias** (el saldo de la cuenta es tu fondo).
+
 ## CSV
 
 Columnas canónicas: `fecha` (YYYY-MM-DD), `cuenta` (nombre), `categoria` (nombre, vacío si transferencia), `tipo`, `monto` (decimal en la moneda de la cuenta, ej. `-1234.56`), `descripcion`, `transfer_id` (opcional), `conciliado` (`true`/`false`), `reconciliado` (`true`/`false`, opcional), `notas`. El import tolera símbolos de moneda y separadores de miles en `monto` (ej. `"Q2,000.00"`).
