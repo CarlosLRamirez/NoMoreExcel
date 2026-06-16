@@ -28,6 +28,7 @@ export interface Cuenta extends BaseRecord {
   dia_pago: number | null;
   activa: boolean;
   ultima_conciliacion?: string;
+  tc_base_inicial?: number; // moneda_base por unidad de la moneda de la cuenta (saldo_inicial)
 }
 
 export interface Grupo extends BaseRecord {
@@ -62,6 +63,7 @@ export interface Movimiento extends BaseRecord {
   conciliado: boolean; // confirmado / "cleared": apareció en el banco
   reconciliado: boolean; // bloqueado tras un reconcile (reconciled ⇒ conciliado)
   ingreso_proximo_mes: boolean; // ingreso que se presupuesta el mes siguiente
+  tc_base?: number; // moneda_base por unidad de la moneda del movimiento (costo histórico)
   eliminado: boolean;
   notas: string;
   expand?: {

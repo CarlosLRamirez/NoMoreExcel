@@ -73,6 +73,24 @@ routerAdd(
     }
 
     const transferId = $security.randomString(15);
+
+    // Costo histórico: tasa real de la transferencia (moneda_base por unidad extranjera).
+    let monedaBase = "GTQ";
+    try {
+      const st = e.app.findFirstRecordByFilter("settings", "usuario = {:u}", { u: userId });
+      monedaBase = st.getString("moneda_base") || "GTQ";
+    } catch (_) {}
+    const absO = Math.abs(montoOrigen);
+    const absD = Math.abs(montoDestino);
+    let baseAmt = 0;
+    let forAmt = 0;
+    if (monedaOrigen === monedaBase) baseAmt = absO;
+    else forAmt = absO;
+    if (monedaDestino === monedaBase) baseAmt = absD;
+    else forAmt = absD;
+    const tcForeign = baseAmt > 0 && forAmt > 0 ? baseAmt / forAmt : 0;
+    const tcOf = (mon) => (mon === monedaBase ? 1 : tcForeign);
+
     const col = e.app.findCollectionByNameOrId("movimientos");
 
     let out, inc;
@@ -86,6 +104,7 @@ routerAdd(
       out.set("descripcion", descripcion);
       out.set("notas", notas);
       out.set("transfer_id", transferId);
+      out.set("tc_base", tcOf(monedaOrigen));
       if (tipoCambio) out.set("tipo_cambio", tipoCambio);
       txApp.save(out);
 
@@ -98,6 +117,7 @@ routerAdd(
       inc.set("descripcion", descripcion);
       inc.set("notas", notas);
       inc.set("transfer_id", transferId);
+      inc.set("tc_base", tcOf(monedaDestino));
       if (tipoCambio) inc.set("tipo_cambio", tipoCambio);
       txApp.save(inc);
     });
@@ -191,6 +211,23 @@ routerAdd(
     const legOrigen = legs[0].getInt("monto") < 0 ? legs[0] : legs[1];
     const legDestino = legOrigen.id === legs[0].id ? legs[1] : legs[0];
 
+    // Costo histórico: tasa real de la transferencia (moneda_base por unidad extranjera).
+    let monedaBase = "GTQ";
+    try {
+      const st = e.app.findFirstRecordByFilter("settings", "usuario = {:u}", { u: userId });
+      monedaBase = st.getString("moneda_base") || "GTQ";
+    } catch (_) {}
+    const absO = Math.abs(montoOrigen);
+    const absD = Math.abs(montoDestino);
+    let baseAmt = 0;
+    let forAmt = 0;
+    if (monedaOrigen === monedaBase) baseAmt = absO;
+    else forAmt = absO;
+    if (monedaDestino === monedaBase) baseAmt = absD;
+    else forAmt = absD;
+    const tcForeign = baseAmt > 0 && forAmt > 0 ? baseAmt / forAmt : 0;
+    const tcOf = (mon) => (mon === monedaBase ? 1 : tcForeign);
+
     e.app.runInTransaction((txApp) => {
       legOrigen.set("fecha", fecha);
       legOrigen.set("cuenta", cuentaOrigenId);
@@ -198,6 +235,7 @@ routerAdd(
       legOrigen.set("descripcion", descripcion);
       legOrigen.set("notas", notas);
       legOrigen.set("tipo_cambio", tipoCambio);
+      legOrigen.set("tc_base", tcOf(monedaOrigen));
       legOrigen.set("conciliado", false);
       legOrigen.set("reconciliado", false);
       txApp.save(legOrigen);
@@ -208,6 +246,7 @@ routerAdd(
       legDestino.set("descripcion", descripcion);
       legDestino.set("notas", notas);
       legDestino.set("tipo_cambio", tipoCambio);
+      legDestino.set("tc_base", tcOf(monedaDestino));
       legDestino.set("conciliado", false);
       legDestino.set("reconciliado", false);
       txApp.save(legDestino);

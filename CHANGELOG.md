@@ -5,6 +5,21 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.4.0] - 2026-06-16
+
+### Cambiado
+- **Patrimonio a costo histórico (multimoneda).** El patrimonio consolidado ya no
+  usa una sola tasa global para valuar los saldos en USD; ahora cada movimiento y
+  saldo inicial extranjero guarda su tasa (`movimientos.tc_base`,
+  `cuentas.tc_base_inicial`). Las transferencias cross-currency se valúan a su tasa
+  real y quedan en **residuo 0** (eliminan la ganancia/pérdida cambiaria artificial);
+  las compras/ingresos en USD se congelan a la tasa del momento.
+- `POST /api/transfers` y `/api/transfers/update` fijan `tc_base` por pata; el hook de
+  movimientos congela el resto. Migración `1750000700` agrega los campos y rellena
+  datos existentes (transferencias a su tasa real, demás USD a la tasa global vigente).
+- `finance.patrimonio` calcula el consolidado por costo histórico; `scripts/diagnose.mjs`
+  reporta el patrimonio histórico y el residuo de transferencias.
+
 ## [1.3.0] - 2026-06-16
 
 ### Añadido

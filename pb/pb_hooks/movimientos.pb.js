@@ -81,6 +81,22 @@ function normalizeMovimiento(e) {
     r.set("ingreso_proximo_mes", false);
   }
 
+  // Costo histórico: congelar tc_base (moneda_base por unidad de la moneda del movimiento).
+  // Las transferencias las fija /api/transfers con su tasa real; aquí solo el resto.
+  let monedaBase = "GTQ";
+  let tcGlobal = 0;
+  try {
+    const st = e.app.findFirstRecordByFilter("settings", "usuario = {:u}", { u: usuario });
+    monedaBase = st.getString("moneda_base") || "GTQ";
+    tcGlobal = st.getFloat("tipo_cambio_usd");
+  } catch (_) {}
+  const monedaMov = r.getString("moneda");
+  if (monedaMov === monedaBase) {
+    r.set("tc_base", 1);
+  } else if (tipo !== "transferencia" && !r.get("tc_base")) {
+    r.set("tc_base", tcGlobal); // congela la tasa global actual para esta compra/ingreso en USD
+  }
+
   e.next();
 }
 

@@ -31,7 +31,7 @@ export function Dashboard() {
   if (cuentas.isLoading || movimientos.isLoading) return <p>Cargando…</p>;
 
   const saldos = saldosPorCuenta(cuentas.data ?? [], movimientos.data ?? []);
-  const pat = patrimonio(saldos, settings.data ?? null);
+  const pat = patrimonio(saldos, settings.data ?? null, movimientos.data ?? []);
 
   const abrirConciliar = (s: SaldoCuenta) => {
     setTarget(s);

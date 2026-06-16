@@ -135,6 +135,13 @@ Implementadas en `pb/pb_hooks/`:
 
 El **balance por cuenta, patrimonio neto y reportes** se computan (no se guardan) en el frontend con aritmética entera (`frontend/src/lib/finance.ts`). La **exportación CSV** se genera en el cliente (`frontend/src/lib/csv.ts`).
 
+### Patrimonio a costo histórico (multimoneda)
+
+El patrimonio consolidado en `moneda_base` usa **costo histórico**: cada movimiento y saldo inicial en moneda extranjera guarda su propia tasa (`movimientos.tc_base`, `cuentas.tc_base_inicial` = moneda_base por unidad de la moneda de la cuenta, al momento). El patrimonio = Σ equivalentes a esas tasas, **no** `saldo × tasa_global`. Así:
+- Las transferencias cross-currency se valúan a su tasa real y quedan en **residuo 0** (no inventan ganancia/pérdida cambiaria).
+- Las compras/ingresos en USD quedan **congelados** a la tasa del momento (`POST /api/transfers` fija la de cada transferencia; el hook congela el resto a la tasa global vigente al registrar).
+- Si un movimiento no tiene `tc_base` (datos viejos), cae a la tasa global. La migración `1750000700` rellena los existentes.
+
 ---
 
 ## Manual de uso: casos comunes

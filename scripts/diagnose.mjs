@@ -130,9 +130,24 @@ async function main() {
   const flujoUsuario = inicialConsol + ingTodo + gasTodo; // sin transferencias
   console.log("\nVs. tu cálculo (inicial + ingresos − gastos, SIN transferencias ni excluidas):");
   console.log(`  flujo sin transferencias:  ${Q(flujoUsuario)}`);
-  console.log(`  diferencia con patrimonio: ${Q(patrimonio - flujoUsuario)}  =  efecto de transferencias FX (${Q(transferFX)})`);
   console.log(`  ingresos sin excluidas:    ${Q(ingTodo - ingExcl)}`);
   console.log(`  gastos sin excluidas:      ${Q(gasTodo - gasExcl)}`);
+
+  // --- Costo histórico (modelo actual del patrimonio) ---
+  const beq = (amount, mon, r) => (mon === base ? amount : r && r > 0 ? Math.round(amount * r) : conv(amount, mon));
+  let patHist = 0;
+  let transResid = 0;
+  for (const c of cuentas) patHist += beq(c.saldo_inicial || 0, c.moneda, c.tc_base_inicial);
+  for (const m of movs) {
+    if (m.eliminado) continue;
+    const v = beq(m.monto, m.moneda, m.tc_base);
+    patHist += v;
+    if (m.tipo === "transferencia") transResid += v;
+  }
+  console.log("\nCosto histórico (lo que AHORA muestra la app):");
+  console.log(`  PATRIMONIO (histórico):        ${Q(patHist)}`);
+  console.log(`  Residuo de transferencias:     ${Q(transResid)}   (debería ser ~0)`);
+  console.log(`  Vs. tu cálculo de flujo:       ${Q(flujoUsuario)}   (diferencia ${Q(patHist - flujoUsuario)})`);
   console.log("");
 }
 

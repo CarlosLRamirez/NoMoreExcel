@@ -45,19 +45,42 @@ export interface Patrimonio {
   tipoCambioUsd: number;
 }
 
-/** Patrimonio neto: subtotal por moneda + consolidado en moneda_base (tipo de cambio manual). */
-export function patrimonio(saldos: SaldoCuenta[], settings: Settings | null): Patrimonio {
+/**
+ * Patrimonio neto: subtotal por moneda + consolidado en moneda_base.
+ * El consolidado usa COSTO HISTÓRICO: cada movimiento/saldo en moneda extranjera se valúa
+ * con su propia tasa `tc_base` (la del momento), no con una sola tasa global. Las
+ * transferencias cross-currency quedan en residuo 0. Si un movimiento no tiene `tc_base`
+ * (datos viejos), cae a la tasa global.
+ */
+export function patrimonio(
+  saldos: SaldoCuenta[],
+  settings: Settings | null,
+  movimientos: Movimiento[]
+): Patrimonio {
   const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
   const tipoCambioUsd = settings?.tipo_cambio_usd ?? 0;
+
   const porMoneda: Record<string, number> = {};
   for (const s of saldos) {
     const m = s.cuenta.moneda;
     porMoneda[m] = (porMoneda[m] ?? 0) + s.saldo;
   }
+
+  const baseEquiv = (amount: number, mon: Moneda, r?: number) => {
+    if (mon === monedaBase) return amount;
+    if (r && r > 0) return Math.round(amount * r);
+    return convertCents(amount, mon, monedaBase, tipoCambioUsd);
+  };
+
   let consolidado = 0;
-  for (const m of Object.keys(porMoneda)) {
-    consolidado += convertCents(porMoneda[m], m as Moneda, monedaBase, tipoCambioUsd);
+  for (const s of saldos) {
+    consolidado += baseEquiv(s.cuenta.saldo_inicial ?? 0, s.cuenta.moneda, s.cuenta.tc_base_inicial);
   }
+  for (const m of movimientos) {
+    if (m.eliminado) continue;
+    consolidado += baseEquiv(m.monto, m.moneda, m.tc_base);
+  }
+
   return { porMoneda, consolidado, monedaBase, tipoCambioUsd };
 }
 
