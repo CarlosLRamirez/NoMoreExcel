@@ -8,6 +8,7 @@ import {
   useAllPresupuestos,
   useSetPresupuesto,
   useCopyPresupuesto,
+  useAssignSpent,
   useSettings,
 } from "../hooks/queries";
 import { balancesCategoria, disponibleParaAsignar } from "../lib/finance";
@@ -48,6 +49,7 @@ export function Presupuesto() {
   const { data: allPresupuestos = [] } = useAllPresupuestos();
   const setPres = useSetPresupuesto();
   const copyPres = useCopyPresupuesto();
+  const assignSpent = useAssignSpent();
   const navigate = useNavigate();
 
   const copiarMesAnterior = async () => {
@@ -101,6 +103,23 @@ export function Presupuesto() {
   const guardar = (catId: string) => {
     const cents = parseAmountToCents(montos[catId] || "0");
     setPres.mutate({ categoria: catId, mes, monto: Number.isNaN(cents) ? 0 : cents });
+  };
+
+  // Asigna a cada categoría visible exactamente lo gastado este mes (YNAB: "budget = activity").
+  // Como "Gastado" ya está en centavos enteros de moneda base, los dólares cuadran exacto.
+  const asignarGastado = async () => {
+    if (
+      !confirm(
+        "¿Asignar a cada categoría exactamente lo gastado este mes? Sobrescribe las asignaciones de este mes."
+      )
+    )
+      return;
+    const items = catsGasto
+      .map((c) => ({ categoria: c.id, mes, monto: bal(c.id).gastadoMes, cur: bal(c.id).asignadoMes }))
+      .filter((it) => it.monto !== it.cur)
+      .map(({ categoria, mes: m, monto }) => ({ categoria, mes: m, monto }));
+    if (items.length === 0) return;
+    await assignSpent.mutateAsync(items);
   };
 
   // totales: asignado y gastado del mes; disponible = saldo acumulado
@@ -199,6 +218,9 @@ export function Presupuesto() {
             />
             Incluir ocultas
           </label>
+          <button onClick={asignarGastado} disabled={assignSpent.isPending} title="Asigna a cada categoría lo gastado este mes (deja el mes en 0)">
+            Asignar lo gastado
+          </button>
           <button onClick={copiarMesAnterior} disabled={copyPres.isPending}>
             Copiar mes anterior
           </button>

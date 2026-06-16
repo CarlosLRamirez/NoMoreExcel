@@ -236,6 +236,17 @@ export function useSetPresupuesto() {
   });
 }
 
+/** Asigna en lote (varias categorías de un mes). */
+export function useAssignSpent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (items: { categoria: string; mes: string; monto: number }[]) => {
+      await Promise.all(items.map((it) => pb.send("/api/budget/set", { method: "POST", body: it })));
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["presupuestos"] }),
+  });
+}
+
 export function useCopyPresupuesto() {
   const qc = useQueryClient();
   return useMutation({

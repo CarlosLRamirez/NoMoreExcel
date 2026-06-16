@@ -5,6 +5,15 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.3.0] - 2026-06-16
+
+### Añadido
+- Botón **"Asignar lo gastado"** en el panel de Presupuesto (estilo YNAB "budget =
+  activity"): pone el Asignado de cada categoría visible igual a su Gastado del mes,
+  dejando el aporte del mes en 0. Como el Gastado ya está en centavos enteros de la
+  moneda base, los gastos hechos en dólares cuadran exacto en 0 (sin desfase por
+  redondeo). Mutación en lote `useAssignSpent`.
+
 ## [1.2.0] - 2026-06-16
 
 ### Añadido
