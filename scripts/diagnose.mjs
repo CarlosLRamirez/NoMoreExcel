@@ -84,7 +84,7 @@ async function main() {
     console.log(`  ${c.nombre.padEnd(22)} ${c.moneda}  inicial ${Q(c.saldo_inicial || 0).padStart(14)}  saldo ${Q(saldo).padStart(14)}`);
   }
   console.log(`\n  Inicial consolidado (${base}): ${Q(inicialConsol)}`);
-  console.log(`  PATRIMONIO NETO (${base}):    ${Q(patrimonio)}`);
+  console.log(`  Patrimonio a tasa global (modelo viejo, sólo comparación): ${Q(patrimonio)}`);
 
   // --- Flujo: ingresos, gastos, transferencias (efecto FX), excluidas ---
   let ingTodo = 0, gasTodo = 0, transferFX = 0;
