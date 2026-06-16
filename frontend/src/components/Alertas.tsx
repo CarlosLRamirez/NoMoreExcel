@@ -27,7 +27,8 @@ export function Alertas() {
   const alertas: Alerta[] = [];
 
   // 1) Dinero sin asignar / sobre-asignado (mes actual)
-  const disp = disponibleParaAsignar(movimientos, allPresupuestos, mes, settings ?? null);
+  const excluidasIds = new Set(categorias.filter((c) => c.excluir_presupuesto).map((c) => c.id));
+  const disp = disponibleParaAsignar(movimientos, allPresupuestos, mes, settings ?? null, excluidasIds);
   if (disp.disponible < 0) {
     alertas.push({
       sev: "warn",

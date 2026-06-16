@@ -5,6 +5,21 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.2.0] - 2026-06-16
+
+### Añadido
+- **Ajuste de patrimonio / puesta al día**: las categorías marcadas como excluidas
+  ahora también quedan fuera del **"Disponible para asignar"** y del reporte de
+  **ingreso vs gasto**. Esto permite registrar una entrada de dinero que "te pone al
+  día" (resetea tu patrimonio hacia 0) usando una categoría excluida: **sube el saldo
+  de la cuenta / patrimonio**, queda registrada y auditable, pero **no afecta
+  presupuesto ni reportes**. Los usuarios nuevos nacen con el grupo "Ajustes" y la
+  categoría "Ajuste de patrimonio" (excluida).
+
+### Cambiado
+- `disponibleParaAsignar` e `ingresoVsGastoPorMes` aceptan un set de categorías
+  excluidas y las ignoran.
+
 ## [1.1.0] - 2026-06-16
 
 ### Añadido

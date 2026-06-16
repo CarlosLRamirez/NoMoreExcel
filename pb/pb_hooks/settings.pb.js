@@ -37,6 +37,8 @@ onRecordAfterCreateSuccess((e) => {
       { nombre: "Personal", tipo: "gasto", cats: ["Ropa", "Entretenimiento", "Cuidado personal"] },
       { nombre: "Financiero", tipo: "gasto", cats: ["Comisiones bancarias", "Pago de tarjeta"] },
       { nombre: "Otros", tipo: "gasto", cats: ["Imprevistos", "Regalos"] },
+      // Categorías excluidas del presupuesto/reportes (ajustes/puesta al día).
+      { nombre: "Ajustes", tipo: "ingreso", excluir: true, cats: ["Ajuste de patrimonio"] },
     ];
 
     const grupoCol = e.app.findCollectionByNameOrId("grupos");
@@ -57,6 +59,7 @@ onRecordAfterCreateSuccess((e) => {
         c.set("grupo", grupo.id);
         c.set("orden", ci);
         c.set("activa", true);
+        c.set("excluir_presupuesto", !!g.excluir);
         e.app.save(c);
       });
     });

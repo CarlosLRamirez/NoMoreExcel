@@ -22,7 +22,10 @@ export function Reportes() {
   const reporte = gastoPorGrupo(movimientos, desde, hasta, settings ?? null, grupos, categorias, incluirOcultas);
   const maxCat = Math.max(1, ...reporte.flatMap((g) => g.categorias.map((c) => c.total)));
   const totalGeneral = reporte.reduce((a, g) => a + g.total, 0);
-  const porMes = ingresoVsGastoPorMes(movimientos, settings ?? null);
+  const excluidasIds = new Set(
+    incluirOcultas ? [] : categorias.filter((c) => c.excluir_presupuesto).map((c) => c.id)
+  );
+  const porMes = ingresoVsGastoPorMes(movimientos, settings ?? null, excluidasIds);
 
   const hayMezcla = new Set(movimientos.filter((m) => !m.eliminado).map((m) => m.moneda)).size > 1;
 

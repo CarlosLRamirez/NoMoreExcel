@@ -80,7 +80,8 @@ export function disponibleParaAsignar(
   movimientos: Movimiento[],
   presupuestos: Presupuesto[],
   mes: string,
-  settings: Settings | null
+  settings: Settings | null,
+  excluidas: Set<string> = new Set()
 ): Disponible {
   const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
   const tc = settings?.tipo_cambio_usd ?? 0;
@@ -95,6 +96,7 @@ export function disponibleParaAsignar(
   let ingresosMes = 0;
   for (const m of movimientos) {
     if (m.eliminado || m.tipo !== "ingreso") continue;
+    if (excluidas.has(m.categoria)) continue; // ingresos de categorías excluidas (ajustes)
     const f = (m.fecha || "").slice(0, 10);
     if (!f) continue;
     // mes en que el ingreso queda disponible (su mes, o el siguiente si está marcado)
@@ -284,13 +286,15 @@ export interface MesIngresoGasto {
 /** (b) Ingreso vs gasto por mes, consolidado en moneda_base. */
 export function ingresoVsGastoPorMes(
   movimientos: Movimiento[],
-  settings: Settings | null
+  settings: Settings | null,
+  excluidas: Set<string> = new Set()
 ): MesIngresoGasto[] {
   const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
   const tc = settings?.tipo_cambio_usd ?? 0;
   const acc = new Map<string, { ingreso: number; gasto: number }>();
   for (const m of movimientos) {
     if (m.eliminado || m.tipo === "transferencia") continue;
+    if (excluidas.has(m.categoria)) continue; // categorías excluidas (ajustes)
     const mes = (m.fecha || "").slice(0, 7);
     if (!mes) continue;
     const base = convertCents(Math.abs(m.monto), m.moneda, monedaBase, tc);

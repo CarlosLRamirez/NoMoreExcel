@@ -71,7 +71,10 @@ export function Presupuesto() {
   };
 
   const base = settings?.moneda_base ?? "GTQ";
-  const disp = disponibleParaAsignar(movimientos, allPresupuestos, mes, settings ?? null);
+  const excluidasIds = new Set(
+    incluirOcultas ? [] : categorias.filter((c) => c.excluir_presupuesto).map((c) => c.id)
+  );
+  const disp = disponibleParaAsignar(movimientos, allPresupuestos, mes, settings ?? null, excluidasIds);
   const balMap = balancesCategoria(movimientos, allPresupuestos, mes, settings ?? null);
   const bal = (id: string) =>
     balMap.get(id) ?? { asignadoMes: 0, gastadoMes: 0, disponible: 0 };
