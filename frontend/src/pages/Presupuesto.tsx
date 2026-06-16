@@ -10,7 +10,7 @@ import {
   useCopyPresupuesto,
   useSettings,
 } from "../hooks/queries";
-import { gastoEnMesPorCategoria, disponibleParaAsignar } from "../lib/finance";
+import { balancesCategoria, disponibleParaAsignar } from "../lib/finance";
 import { formatMoney, parseAmountToCents, centsToInput } from "../lib/money";
 import { presupuestoToCsv, type PresupuestoCsvRow } from "../lib/csv";
 import type { Categoria } from "../lib/types";
@@ -72,7 +72,9 @@ export function Presupuesto() {
 
   const base = settings?.moneda_base ?? "GTQ";
   const disp = disponibleParaAsignar(movimientos, allPresupuestos, mes, settings ?? null);
-  const spentMap = gastoEnMesPorCategoria(movimientos, mes, settings ?? null);
+  const balMap = balancesCategoria(movimientos, allPresupuestos, mes, settings ?? null);
+  const bal = (id: string) =>
+    balMap.get(id) ?? { asignadoMes: 0, gastadoMes: 0, disponible: 0 };
   const budgetMap = new Map(presupuestos.map((p) => [p.categoria, p.monto]));
 
   const catsGasto = categorias.filter(
@@ -98,21 +100,23 @@ export function Presupuesto() {
     setPres.mutate({ categoria: catId, mes, monto: Number.isNaN(cents) ? 0 : cents });
   };
 
-  // totales del mes
+  // totales: asignado y gastado del mes; disponible = saldo acumulado
   let totalBudget = 0;
   let totalSpent = 0;
+  let totalDisp = 0;
   for (const c of catsGasto) {
-    totalBudget += budgetMap.get(c.id) ?? 0;
-    totalSpent += spentMap.get(c.id) ?? 0;
+    const b = bal(c.id);
+    totalBudget += b.asignadoMes;
+    totalSpent += b.gastadoMes;
+    totalDisp += b.disponible;
   }
 
   const gruposConGasto = grupos.filter((g) => catsDe(g.id).length > 0);
   const sinGrupo = catsDe("");
 
   const filaCategoria = (c: Categoria) => {
-    const b = budgetMap.get(c.id) ?? 0;
-    const s = spentMap.get(c.id) ?? 0;
-    const rem = b - s;
+    const { gastadoMes, disponible } = bal(c.id);
+    const availStart = disponible + gastadoMes; // disponible al inicio del mes
     return (
       <tr key={c.id}>
         <td style={{ paddingLeft: 24 }}>
@@ -130,36 +134,40 @@ export function Presupuesto() {
             onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
           />
         </td>
-        <td className="num">{formatMoney(s, base)}</td>
-        <td className={"num " + (rem < 0 ? "neg" : "")}>{formatMoney(rem, base)}</td>
+        <td className="num">{formatMoney(gastadoMes, base)}</td>
+        <td className={"num " + (disponible < 0 ? "neg" : disponible > 0 ? "pos" : "muted")}>
+          {formatMoney(disponible, base)}
+        </td>
         <td>
-          <Barra spent={s} budget={b} />
+          <Barra spent={gastadoMes} budget={availStart} />
         </td>
       </tr>
     );
   };
 
   const totalesGrupo = (cats: Categoria[]) => {
-    let b = 0;
-    let s = 0;
+    let asig = 0;
+    let gas = 0;
+    let disp2 = 0;
     for (const c of cats) {
-      b += budgetMap.get(c.id) ?? 0;
-      s += spentMap.get(c.id) ?? 0;
+      const b = bal(c.id);
+      asig += b.asignadoMes;
+      gas += b.gastadoMes;
+      disp2 += b.disponible;
     }
-    return { b, s };
+    return { asig, gas, disp: disp2 };
   };
 
   const exportarCsv = () => {
     const filas: PresupuestoCsvRow[] = [
-      { nivel: "TOTAL", grupo: "", categoria: "", presupuesto: totalBudget, gastado: totalSpent, disponible: totalBudget - totalSpent },
+      { nivel: "TOTAL", grupo: "", categoria: "", presupuesto: totalBudget, gastado: totalSpent, disponible: totalDisp },
     ];
     const addGrupo = (nombre: string, cats: Categoria[]) => {
-      const { b, s } = totalesGrupo(cats);
-      filas.push({ nivel: "GRUPO", grupo: nombre, categoria: "", presupuesto: b, gastado: s, disponible: b - s });
+      const { asig, gas, disp: gdisp } = totalesGrupo(cats);
+      filas.push({ nivel: "GRUPO", grupo: nombre, categoria: "", presupuesto: asig, gastado: gas, disponible: gdisp });
       for (const c of cats) {
-        const cb = budgetMap.get(c.id) ?? 0;
-        const cs = spentMap.get(c.id) ?? 0;
-        filas.push({ nivel: "CATEGORIA", grupo: nombre, categoria: c.nombre, presupuesto: cb, gastado: cs, disponible: cb - cs });
+        const b = bal(c.id);
+        filas.push({ nivel: "CATEGORIA", grupo: nombre, categoria: c.nombre, presupuesto: b.asignadoMes, gastado: b.gastadoMes, disponible: b.disponible });
       }
     };
     for (const g of gruposConGasto) addGrupo(g.nombre, catsDe(g.id));
@@ -237,9 +245,9 @@ export function Presupuesto() {
             </div>
           </div>
           <div>
-            <div className="muted">Restante por gastar</div>
-            <div className={"stat " + (totalBudget - totalSpent < 0 ? "neg" : "")} style={{ fontSize: 18 }}>
-              {formatMoney(totalBudget - totalSpent, base)}
+            <div className="muted">Disponible (acumulado)</div>
+            <div className={"stat " + (totalDisp < 0 ? "neg" : "pos")} style={{ fontSize: 18 }}>
+              {formatMoney(totalDisp, base)}
             </div>
           </div>
         </div>
@@ -250,16 +258,16 @@ export function Presupuesto() {
           <thead>
             <tr>
               <th>Categoría</th>
-              <th className="num">Presupuesto ({base})</th>
+              <th className="num">Asignado ({base})</th>
               <th className="num">Gastado</th>
-              <th className="num">Disponible</th>
+              <th className="num">Disponible (acum.)</th>
               <th>Avance</th>
             </tr>
           </thead>
           <tbody>
             {gruposConGasto.map((g) => {
               const cats = catsDe(g.id);
-              const { b, s } = totalesGrupo(cats);
+              const { asig, gas, disp: gdisp } = totalesGrupo(cats);
               return (
                 <Fragment key={g.id}>
                   <tr className="rep-grupo">
@@ -267,16 +275,16 @@ export function Presupuesto() {
                       <strong>{g.nombre}</strong>
                     </td>
                     <td className="num">
-                      <strong>{formatMoney(b, base)}</strong>
+                      <strong>{formatMoney(asig, base)}</strong>
                     </td>
                     <td className="num">
-                      <strong>{formatMoney(s, base)}</strong>
+                      <strong>{formatMoney(gas, base)}</strong>
                     </td>
-                    <td className={"num " + (b - s < 0 ? "neg" : "")}>
-                      <strong>{formatMoney(b - s, base)}</strong>
+                    <td className={"num " + (gdisp < 0 ? "neg" : gdisp > 0 ? "pos" : "")}>
+                      <strong>{formatMoney(gdisp, base)}</strong>
                     </td>
                     <td>
-                      <Barra spent={s} budget={b} />
+                      <Barra spent={gas} budget={gdisp + gas} />
                     </td>
                   </tr>
                   {cats.map(filaCategoria)}

@@ -5,6 +5,18 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.1.0] - 2026-06-16
+
+### Añadido
+- **Saldo acumulado por categoría (sinking funds), estilo YNAB**: en el panel de
+  Presupuesto, la columna "Disponible" de cada categoría ahora es el **saldo rodante**
+  = `Σ asignado − Σ gastado` de todos los meses hasta el mes en curso. Lo que no gastas
+  se acumula mes a mes (ideal para metas: Vacaciones, Fondo de emergencia, etc.), y el
+  saldo negativo (sobregasto acumulado) se muestra en rojo. El total del grupo y del mes
+  reflejan el acumulado; la barra de avance compara el gasto del mes contra lo disponible
+  al inicio del mes. El export CSV usa el mismo saldo acumulado.
+- Helper `balancesCategoria` en `frontend/src/lib/finance.ts`.
+
 ## [1.0.0] - 2026-06-16
 
 Primer release. App de finanzas personales multi-usuario, local-first, con

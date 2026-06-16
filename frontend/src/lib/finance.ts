@@ -115,6 +115,58 @@ export function disponibleParaAsignar(
   return { arrastrado, ingresosMes, asignadoMes, disponible: arrastrado + ingresosMes - asignadoMes };
 }
 
+// --------------------------- Balance acumulado por categoría (sinking funds) ---------------------------
+
+export interface BalanceCategoria {
+  asignadoMes: number; // presupuesto asignado en el mes
+  gastadoMes: number; // gasto del mes (moneda_base)
+  disponible: number; // saldo acumulado = Σ asignado(≤mes) − Σ gastado(≤mes)
+}
+
+/**
+ * Saldo acumulado por categoría hasta `mes` (estilo YNAB): cada categoría arrastra su
+ * saldo no gastado, así que `disponible = Σ asignado − Σ gastado` de todos los meses ≤ mes.
+ * Devuelve un mapa categoriaId -> {asignadoMes, gastadoMes, disponible}.
+ */
+export function balancesCategoria(
+  movimientos: Movimiento[],
+  presupuestos: Presupuesto[],
+  mes: string,
+  settings: Settings | null
+): Map<string, BalanceCategoria> {
+  const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
+  const tc = settings?.tipo_cambio_usd ?? 0;
+
+  const cumAsignado = new Map<string, number>();
+  const asignadoMes = new Map<string, number>();
+  for (const p of presupuestos) {
+    if (p.mes <= mes) cumAsignado.set(p.categoria, (cumAsignado.get(p.categoria) ?? 0) + p.monto);
+    if (p.mes === mes) asignadoMes.set(p.categoria, (asignadoMes.get(p.categoria) ?? 0) + p.monto);
+  }
+
+  const cumGastado = new Map<string, number>();
+  const gastadoMes = new Map<string, number>();
+  for (const m of movimientos) {
+    if (m.eliminado || m.tipo !== "gasto") continue;
+    const mm = (m.fecha || "").slice(0, 7);
+    if (!mm || mm > mes) continue;
+    const conv = convertCents(Math.abs(m.monto), m.moneda, monedaBase, tc);
+    cumGastado.set(m.categoria, (cumGastado.get(m.categoria) ?? 0) + conv);
+    if (mm === mes) gastadoMes.set(m.categoria, (gastadoMes.get(m.categoria) ?? 0) + conv);
+  }
+
+  const out = new Map<string, BalanceCategoria>();
+  const ids = new Set<string>([...cumAsignado.keys(), ...cumGastado.keys()]);
+  for (const id of ids) {
+    out.set(id, {
+      asignadoMes: asignadoMes.get(id) ?? 0,
+      gastadoMes: gastadoMes.get(id) ?? 0,
+      disponible: (cumAsignado.get(id) ?? 0) - (cumGastado.get(id) ?? 0),
+    });
+  }
+  return out;
+}
+
 // --------------------------- Reportes ---------------------------
 
 export interface ReporteCategoria {
