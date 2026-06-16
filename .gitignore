@@ -1,0 +1,25 @@
+# PocketBase
+pb/pocketbase
+pb/pb_data/
+pb/pb_data
+*.db
+*.db-shm
+*.db-wal
+
+# Node
+node_modules/
+frontend/dist/
+
+# TypeScript build artifacts (emitidos por `tsc -b`)
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# Env
+.env
+.env.local
+*.local
+
+# OS / editor
+.DS_Store
+*.log
