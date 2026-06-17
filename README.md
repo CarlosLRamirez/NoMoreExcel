@@ -73,6 +73,54 @@ Regístrate desde la pantalla de login (registro público). Al crear el usuario 
 
 ---
 
+## Desplegar en la nube (Fly.io)
+
+Un solo contenedor: **PocketBase sirve la API y el frontend** (compilado en `pb_public`). Archivos: `Dockerfile`, `fly.toml`, `.dockerignore`.
+
+### Pasos
+
+```bash
+# 1) Instalar flyctl y autenticarse
+brew install flyctl          # o: curl -L https://fly.io/install.sh | sh
+fly auth login
+
+# 2) Crear la app (elige un nombre único; actualiza "app" en fly.toml si difiere)
+fly launch --no-deploy --copy-config --name TU-APP --region mia
+#   (detecta el Dockerfile y el [mounts]; si pregunta por el volumen, acepta)
+
+# 3) Crear el volumen persistente para la base de datos (SQLite)
+fly volumes create pb_data --region mia --size 1 --yes
+
+# 4) Desplegar
+fly deploy
+
+# 5) Crear el superusuario del panel admin (una vez)
+fly ssh console -C "/pb/pocketbase superuser upsert TU_EMAIL TU_PASSWORD"
+```
+
+Tu app queda en `https://TU-APP.fly.dev` (API + frontend + panel admin en `/_/`).
+
+> **Importante:** PocketBase usa SQLite, así que corre **una sola máquina**. No escales a múltiples instancias. El volumen `pb_data` conserva tus datos entre despliegues.
+
+### Migrar tus datos locales a la nube (backups de PocketBase)
+
+1. Local: `http://127.0.0.1:8090/_/` → **Settings → Backups → New backup** → descarga el `.zip`.
+2. Nube: `https://TU-APP.fly.dev/_/` (entra con el superusuario del paso 5) → **Settings → Backups → Upload backup** → sube el zip y **Restore**.
+3. El restore reemplaza la base con la tuya (cuentas, categorías, movimientos, presupuestos y usuarios). Tras restaurar, inicia sesión con tu usuario de la app.
+
+### Actualizar
+
+`fly deploy` reconstruye la imagen; las migraciones nuevas se aplican solas al arrancar y `pb_data` (en el volumen) se conserva.
+
+## Instalar como PWA (en el teléfono)
+
+La app es una **PWA** (manifest + service worker, vía `vite-plugin-pwa`). Una vez desplegada con HTTPS:
+
+- **Android / Chrome:** abre `https://TU-APP.fly.dev` → menú ⋮ → **Instalar app**.
+- **iPhone / Safari:** abre la URL → **Compartir** → **Agregar a inicio**.
+
+Queda como ícono en pantalla, a pantalla completa (`display: standalone`). Íconos en `frontend/public/` (generados por `scripts/gen-icons.py`).
+
 ## Modelo de datos (colecciones)
 
 - **users** (auth): campos por defecto + `nombre`.

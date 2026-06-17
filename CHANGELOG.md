@@ -5,6 +5,18 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.5.0] - 2026-06-16
+
+### Añadido
+- **Despliegue en la nube (Fly.io):** `Dockerfile` multi-etapa (PocketBase sirve la
+  API y el frontend compilado en `pb_public`), `fly.toml` (volumen persistente para
+  `pb_data`, una sola máquina) y `.dockerignore`. Instrucciones en el README, incluida
+  la migración de datos vía backups de PocketBase.
+- **PWA:** `vite-plugin-pwa` (manifest + service worker, `display: standalone`,
+  íconos generados por `scripts/gen-icons.py`). Instalable desde Android/iOS.
+- El cliente PocketBase usa el mismo origen en producción (`window.location.origin`);
+  en desarrollo sigue usando `VITE_PB_URL`.
+
 ## [1.4.0] - 2026-06-16
 
 ### Cambiado

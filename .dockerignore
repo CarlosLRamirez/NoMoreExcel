@@ -1,0 +1,8 @@
+**/node_modules
+frontend/dist
+frontend/.env
+frontend/.env.local
+pb/pb_data
+pb/pocketbase
+.git
+*.log
