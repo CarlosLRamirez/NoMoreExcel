@@ -112,6 +112,17 @@ Tu app queda en `https://TU-APP.fly.dev` (API + frontend + panel admin en `/_/`)
 
 `fly deploy` reconstruye la imagen; las migraciones nuevas se aplican solas al arrancar y `pb_data` (en el volumen) se conserva.
 
+### Auto-deploy con GitHub Actions
+
+`.github/workflows/fly-deploy.yml` despliega automáticamente en cada push a `main` (o manualmente desde la pestaña Actions). Configúralo una vez:
+
+```bash
+# genera un token de deploy de Fly
+fly tokens create deploy -x 999999h
+```
+
+Copia el token y agrégalo como **secret** del repo en GitHub: *Settings → Secrets and variables → Actions → New repository secret*, con nombre **`FLY_API_TOKEN`**. Desde ahí, cada push a `main` redepliega solo (compila en los builders de Fly con `--remote-only`).
+
 ## Instalar como PWA (en el teléfono)
 
 La app es una **PWA** (manifest + service worker, vía `vite-plugin-pwa`). Una vez desplegada con HTTPS:
