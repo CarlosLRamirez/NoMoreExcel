@@ -208,7 +208,7 @@ export function Presupuesto() {
     <div>
       <div className="page-head">
         <h2>Presupuesto</h2>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <label className="muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <input
               type="checkbox"
@@ -279,7 +279,7 @@ export function Presupuesto() {
       </div>
 
       <div className="card">
-        <table>
+        <table className="budget-table">
           <thead>
             <tr>
               <th>Categoría</th>

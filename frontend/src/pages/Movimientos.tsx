@@ -456,7 +456,7 @@ export function Movimientos() {
     <div>
       <div className="page-head">
         <h2>Movimientos</h2>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button onClick={onExampleCsv} title="Descarga una plantilla con el formato esperado">
             CSV de ejemplo
           </button>

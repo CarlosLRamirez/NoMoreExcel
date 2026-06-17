@@ -538,12 +538,41 @@ tr.rep-grupo td {
     flex-wrap: wrap;
   }
 
-  /* Tablas anchas: scroll horizontal en vez de romper el layout */
+  /* Tablas anchas: scroll horizontal por defecto */
   table {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* Presupuesto: vista compacta SIN scroll → Categoría · Gastado · Disponible */
+  table.budget-table {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+    white-space: normal;
+    overflow: visible;
+  }
+  table.budget-table th:nth-child(2),
+  table.budget-table td:nth-child(2), /* Asignado (input) */
+  table.budget-table th:nth-child(5),
+  table.budget-table td:nth-child(5) /* Avance (barra) */ {
+    display: none;
+  }
+  table.budget-table th,
+  table.budget-table td {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  table.budget-table th:first-child,
+  table.budget-table td:first-child {
+    width: 46%;
+    white-space: normal;
+    word-break: break-word;
+  }
+  table.budget-table .num {
+    font-size: 13px;
   }
 
   /* Inputs a 16px para que iOS no haga zoom al enfocar */
@@ -553,12 +582,23 @@ tr.rep-grupo td {
     font-size: 16px;
   }
 
+  /* Modales a pantalla completa con campos apilados (no se salen del viewport) */
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-start;
+  }
   .modal {
     width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
     padding: 16px;
   }
-  .modal-backdrop {
-    padding-top: 24px;
+  .modal .row {
+    flex-direction: column;
+  }
+  .modal-actions {
+    flex-wrap: wrap;
   }
 
   .grid {

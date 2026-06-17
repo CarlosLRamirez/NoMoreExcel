@@ -5,6 +5,16 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.6.1] - 2026-06-17
+
+### Mejorado (móvil)
+- **Modales a pantalla completa con campos apilados**: el modal de "Nuevo movimiento"
+  (y los demás) ya no se sale del viewport; las filas de dos columnas se apilan.
+- **Presupuesto en móvil**: tabla compacta sin scroll horizontal mostrando
+  **Categoría · Gastado · Disponible** (se ocultan las columnas Asignado y Avance);
+  el nombre de la categoría siempre visible.
+- Los botones de acción de Presupuesto y Movimientos se acomodan (flex-wrap) en pantallas chicas.
+
 ## [1.6.0] - 2026-06-17
 
 ### Cambiado / Seguridad
