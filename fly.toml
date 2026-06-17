@@ -1,22 +1,25 @@
-# Configuración de Fly.io. Cambia "app" por un nombre único antes de desplegar.
-app = "nomoreexcel"
-primary_region = "mia"   # Miami (cercano a Guatemala)
+# fly.toml app configuration file generated for nomoreexcel on 2026-06-17T07:18:11-06:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'nomoreexcel'
+primary_region = 'dfw'
 
 [build]
+
+[[mounts]]
+  source = 'pb_data'
+  destination = '/pb/pb_data'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
-  min_machines_running = 0   # escala a 0 cuando no se usa (arranque en frío al volver)
-
-# pb_data en volumen persistente. IMPORTANTE: una sola máquina (PocketBase usa SQLite).
-[mounts]
-  source = "pb_data"
-  destination = "/pb/pb_data"
+  min_machines_running = 0
 
 [[vm]]
-  memory = "512mb"
-  cpu_kind = "shared"
+  memory = '512mb'
   cpus = 1
+  memory_mb = 512

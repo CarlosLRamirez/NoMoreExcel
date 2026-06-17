@@ -69,7 +69,7 @@ npm run dev                 # http://localhost:5173
 VITE_PB_URL=http://127.0.0.1:8090
 ```
 
-Regístrate desde la pantalla de login (registro público). Al crear el usuario se generan automáticamente su registro `settings` (moneda base GTQ) y un set de **categorías por defecto** (gastos e ingresos), vía el hook `pb/pb_hooks/settings.pb.js`.
+El **registro público está cerrado** (migración `1750000800`): solo un superusuario puede crear usuarios desde el panel admin (`/_/` → colección `users`). Al crear un usuario se generan automáticamente su registro `settings` (moneda base GTQ) y un set de **categorías por defecto** + grupos, vía el hook `pb/pb_hooks/settings.pb.js`. La UI es **responsive** (se adapta a móvil; instalable como PWA).
 
 ---
 
@@ -249,10 +249,10 @@ Columnas canónicas: `fecha` (YYYY-MM-DD), `cuenta` (nombre), `categoria` (nombr
 
 ## Verificación / criterios de aceptación
 
-Con PocketBase corriendo:
+Con PocketBase corriendo (el registro está cerrado, así que `verify` crea sus usuarios de prueba con un superusuario):
 
 ```bash
-node scripts/verify.mjs
+PB_SU_EMAIL=admin@ejemplo.com PB_SU_PASSWORD=tuClave node scripts/verify.mjs
 ```
 
 Cubre y verifica automáticamente:

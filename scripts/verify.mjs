@@ -55,10 +55,27 @@ const parseCents = (s) => {
   return neg ? -cents : cents;
 };
 
+// El registro público está cerrado; los usuarios de prueba se crean con un superusuario.
+// Provee PB_SU_EMAIL y PB_SU_PASSWORD en el entorno.
+let suToken = "";
+async function authSuperuser() {
+  if (!process.env.PB_SU_EMAIL || !process.env.PB_SU_PASSWORD) {
+    throw new Error(
+      "El registro está cerrado: define PB_SU_EMAIL y PB_SU_PASSWORD (superusuario) para correr verify."
+    );
+  }
+  const auth = await api("POST", "/api/collections/_superusers/auth-with-password", {
+    identity: process.env.PB_SU_EMAIL,
+    password: process.env.PB_SU_PASSWORD,
+  });
+  suToken = auth.token;
+}
+
 const createdUsers = []; // para limpieza al final
 async function signupLogin(nombre) {
   const email = `verify_${nombre}_${Date.now()}_${Math.floor(Math.random() * 1e6)}@test.com`;
   const pwd = "password123";
+  token = suToken; // crear el usuario con el superusuario
   await api("POST", "/api/collections/users/records", {
     email,
     password: pwd,
@@ -118,6 +135,7 @@ async function saldos(uid) {
 async function main() {
   console.log(`\nVerificando contra ${BASE}\n`);
   await api("GET", "/api/health");
+  await authSuperuser();
 
   const uid = await signupLogin("u1");
 

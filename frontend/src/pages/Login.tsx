@@ -2,11 +2,9 @@ import { useState, type FormEvent } from "react";
 import { useAuth } from "../hooks/auth";
 
 export function Login() {
-  const { login, register } = useAuth();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [nombre, setNombre] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -15,11 +13,10 @@ export function Login() {
     setError("");
     setBusy(true);
     try {
-      if (mode === "login") await login(email, password);
-      else await register(email, password, nombre);
+      await login(email, password);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "No se pudo completar la operación. Revisa los datos."
+        err instanceof Error ? err.message : "No se pudo iniciar sesión. Revisa tus datos."
       );
     } finally {
       setBusy(false);
@@ -29,13 +26,7 @@ export function Login() {
   return (
     <div className="auth-wrap">
       <form className="card auth-card" onSubmit={submit}>
-        <h2>{mode === "login" ? "Iniciar sesión" : "Crear cuenta"}</h2>
-        {mode === "register" && (
-          <div className="field">
-            <label>Nombre</label>
-            <input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-          </div>
-        )}
+        <h2>Iniciar sesión</h2>
         <div className="field">
           <label>Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -52,21 +43,8 @@ export function Login() {
         </div>
         {error && <div className="error">{error}</div>}
         <button className="primary" disabled={busy} style={{ width: "100%" }}>
-          {busy ? "..." : mode === "login" ? "Entrar" : "Registrarme"}
+          {busy ? "..." : "Entrar"}
         </button>
-        <p className="muted" style={{ textAlign: "center", marginBottom: 0 }}>
-          {mode === "login" ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
-          <button
-            type="button"
-            className="link"
-            onClick={() => {
-              setMode(mode === "login" ? "register" : "login");
-              setError("");
-            }}
-          >
-            {mode === "login" ? "Regístrate" : "Inicia sesión"}
-          </button>
-        </p>
       </form>
     </div>
   );

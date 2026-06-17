@@ -5,6 +5,19 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.6.0] - 2026-06-17
+
+### Cambiado / Seguridad
+- **Registro público cerrado** (migración `1750000800`): `users.createRule = null`,
+  solo un superusuario crea usuarios. La pantalla de login ya no ofrece "Registrarse".
+- `scripts/verify.mjs` crea sus usuarios de prueba con superusuario (`PB_SU_EMAIL`,
+  `PB_SU_PASSWORD`).
+
+### Añadido
+- **UI responsive (móvil):** la barra lateral pasa a barra superior con navegación
+  horizontal; tablas con scroll horizontal; grids a una columna; inputs a 16px (sin
+  zoom en iOS); modales a ancho completo. Solo CSS, sin refactor de componentes.
+
 ## [1.5.0] - 2026-06-16
 
 ### Añadido

@@ -477,6 +477,95 @@ tr.rep-grupo td {
   background: #f0f2f5;
 }
 
+/* ----------------------------- Móvil ----------------------------- */
+@media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+  }
+
+  /* La barra lateral pasa a ser una barra superior */
+  .sidebar {
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+  }
+  .sidebar h1 {
+    order: 1;
+    margin: 0;
+    font-size: 15px;
+  }
+  .sidebar button.link {
+    order: 2;
+    margin-left: auto;
+    padding: 4px 6px;
+  }
+  .sidebar .spacer,
+  .sidebar > .muted {
+    display: none;
+  }
+  .sidebar nav {
+    order: 3;
+    flex: 1 1 100%;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar nav a {
+    white-space: nowrap;
+    padding: 6px 10px;
+  }
+
+  .main {
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .page-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .row {
+    flex-wrap: wrap;
+  }
+
+  /* Tablas anchas: scroll horizontal en vez de romper el layout */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Inputs a 16px para que iOS no haga zoom al enfocar */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .modal {
+    width: 100%;
+    padding: 16px;
+  }
+  .modal-backdrop {
+    padding-top: 24px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Presupuesto */
 .month-nav {
   display: flex;
