@@ -16,6 +16,7 @@ import { Modal } from "../components/Modal";
 import { Combobox } from "../components/Combobox";
 import { centsToInput, formatMoney, parseAmountToCents } from "../lib/money";
 import { csvToRows, exportToCsv, exampleCsv } from "../lib/csv";
+import { parseTags, todasLasTags } from "../lib/finance";
 import type { Cuenta, Categoria, Movimiento, TipoMovimiento } from "../lib/types";
 
 const hoy = () => new Date().toISOString().slice(0, 10);
@@ -44,6 +45,7 @@ interface MovForm {
   montoMag: string;
   descripcion: string;
   notas: string;
+  tags: string;
   conciliado: boolean;
   proximoMes: boolean; // ingreso para el próximo mes
   lockedTransfer?: boolean; // editando una pata de transferencia
@@ -120,6 +122,9 @@ export function Movimientos() {
   const [fTipo, setFTipo] = useState("");
   const [fDesde, setFDesde] = useState(searchParams.get("desde") ?? "");
   const [fHasta, setFHasta] = useState(searchParams.get("hasta") ?? "");
+  const [fTag, setFTag] = useState(searchParams.get("tag") ?? "");
+
+  const tagsExistentes = useMemo(() => todasLasTags(movimientos), [movimientos]);
 
   const [movForm, setMovForm] = useState<MovForm | null>(null);
   const [transferForm, setTransferForm] = useState<TransferForm | null>(null);
@@ -130,7 +135,7 @@ export function Movimientos() {
 
   // Por defecto ocultamos los conciliados (bloqueados), estilo YNAB.
   const [mostrarRec, setMostrarRec] = useState<boolean>(() => {
-    if (searchParams.get("categoria")) return true; // al venir del presupuesto, mostrar todo
+    if (searchParams.get("categoria") || searchParams.get("tag")) return true; // al venir filtrado, mostrar todo
     try {
       return localStorage.getItem("mov_show_rec") === "1";
     } catch {
@@ -148,6 +153,7 @@ export function Movimientos() {
     if (fTipo && m.tipo !== fTipo) return false;
     if (fDesde && f < fDesde) return false;
     if (fHasta && f > fHasta) return false;
+    if (fTag && !parseTags(m.tags).includes(fTag)) return false;
     return true;
   });
   const filtrados = mostrarRec ? baseFiltrados : baseFiltrados.filter((m) => !m.reconciliado);
@@ -253,6 +259,7 @@ export function Movimientos() {
       montoMag: "",
       descripcion: "",
       notas: "",
+      tags: "",
       conciliado: false,
       proximoMes: false,
     });
@@ -271,6 +278,7 @@ export function Movimientos() {
         montoMag: "",
         descripcion: m.descripcion,
         notas: m.notas,
+        tags: m.tags || "",
         conciliado: m.conciliado,
         proximoMes: false,
         lockedTransfer: true,
@@ -290,6 +298,7 @@ export function Movimientos() {
         montoMag: centsToInput(Math.abs(m.monto)),
         descripcion: m.descripcion,
         notas: m.notas,
+        tags: m.tags || "",
         conciliado: m.conciliado,
         proximoMes: m.ingreso_proximo_mes,
       });
@@ -307,6 +316,7 @@ export function Movimientos() {
           fecha: movForm.fecha,
           descripcion: movForm.descripcion,
           notas: movForm.notas,
+          tags: movForm.tags,
           conciliado: movForm.conciliado,
         });
         setMovForm(null);
@@ -326,11 +336,12 @@ export function Movimientos() {
         monto,
         descripcion: movForm.descripcion,
         notas: movForm.notas,
+        tags: movForm.tags,
         conciliado: movForm.conciliado,
         ingreso_proximo_mes: movForm.tipo === "ingreso" ? movForm.proximoMes : false,
       });
       if (another) {
-        // Mantiene fecha, cuenta, tipo y categoría; limpia monto/descripción/notas
+        // Mantiene fecha, cuenta, tipo, categoría y tags; limpia monto/descripción/notas
         // para capturar el siguiente movimiento rápido.
         setFlash(`✓ Guardado: ${movForm.descripcion || formatMoney(monto, cuentaMap.get(movForm.cuenta)?.moneda ?? "GTQ")}`);
         setMovForm({ ...movForm, id: undefined, montoMag: "", descripcion: "", notas: "" });
@@ -531,6 +542,19 @@ export function Movimientos() {
             <option value="transferencia">Transferencia</option>
           </select>
         </div>
+        {tagsExistentes.length > 0 && (
+          <div className="field">
+            <label>Etiqueta</label>
+            <select value={fTag} onChange={(e) => setFTag(e.target.value)}>
+              <option value="">Todas</option>
+              {tagsExistentes.map((t) => (
+                <option key={t} value={t}>
+                  #{t}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="field">
           <label>Desde</label>
           <input type="date" value={fDesde} onChange={(e) => setFDesde(e.target.value)} />
@@ -617,7 +641,19 @@ export function Movimientos() {
                   {m.descripcion ? <span className="muted"> · {m.descripcion}</span> : null}
                 </td>
               ) : (
-                <td title={m.descripcion}>{m.descripcion}</td>
+                <td title={m.descripcion}>
+                  {m.descripcion}
+                  {parseTags(m.tags).map((t) => (
+                    <button
+                      key={t}
+                      className="badge tag-chip"
+                      title={`Filtrar por #${t}`}
+                      onClick={() => setFTag(t)}
+                    >
+                      #{t}
+                    </button>
+                  ))}
+                </td>
               )}
               <td className={"num " + (m.monto < 0 ? "neg" : "pos")}>
                 {formatMoney(m.monto, m.moneda)}
@@ -767,6 +803,20 @@ export function Movimientos() {
               value={movForm.notas}
               onChange={(e) => setMovForm({ ...movForm, notas: e.target.value })}
             />
+          </div>
+          <div className="field">
+            <label>Etiquetas (ej. #cumplevictor #viajeperu)</label>
+            <input
+              value={movForm.tags}
+              placeholder="#etiqueta1 #etiqueta2"
+              list="tags-existentes"
+              onChange={(e) => setMovForm({ ...movForm, tags: e.target.value })}
+            />
+            <datalist id="tags-existentes">
+              {tagsExistentes.map((t) => (
+                <option key={t} value={"#" + t} />
+              ))}
+            </datalist>
           </div>
           <div className="field">
             <label>

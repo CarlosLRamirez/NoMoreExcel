@@ -144,6 +144,7 @@ routerAdd(
         conciliado: parseBool(row.conciliado),
         reconciliado: parseBool(row.reconciliado),
         ingreso_proximo_mes: tipo === "ingreso" && parseBool(row.ingreso_proximo_mes),
+        tags: row.tags || "",
         notas: row.notas || "",
       });
     });
@@ -192,6 +193,7 @@ routerAdd(
           r.set("conciliado", p.conciliado);
           r.set("reconciliado", p.reconciliado);
           r.set("ingreso_proximo_mes", p.ingreso_proximo_mes);
+          r.set("tags", p.tags);
           r.set("notas", p.notas);
           txApp.save(r); // dispara las invariantes de movimientos.pb.js
           count++;

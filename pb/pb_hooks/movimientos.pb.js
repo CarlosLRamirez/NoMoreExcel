@@ -81,6 +81,26 @@ function normalizeMovimiento(e) {
     r.set("ingreso_proximo_mes", false);
   }
 
+  // Normalizar etiquetas: separadas por espacio/coma, sin '#', minúsculas, sin
+  // duplicados. Se guardan como tokens separados por espacio (ej. "cumplevictor viajeperu").
+  const tagsRaw = r.getString("tags");
+  if (tagsRaw) {
+    const seen = {};
+    const norm = [];
+    tagsRaw
+      .split(/[\s,]+/)
+      .forEach((t) => {
+        const clean = t.replace(/^#+/, "").toLowerCase().replace(/[^a-z0-9_à-ÿ-]/g, "");
+        if (clean && !seen[clean]) {
+          seen[clean] = true;
+          norm.push(clean);
+        }
+      });
+    r.set("tags", norm.join(" "));
+  } else {
+    r.set("tags", "");
+  }
+
   // Costo histórico: congelar tc_base (moneda_base por unidad de la moneda del movimiento).
   // Las transferencias las fija /api/transfers con su tasa real; aquí solo el resto.
   let monedaBase = "GTQ";

@@ -64,6 +64,7 @@ export interface Movimiento extends BaseRecord {
   reconciliado: boolean; // bloqueado tras un reconcile (reconciled ⇒ conciliado)
   ingreso_proximo_mes: boolean; // ingreso que se presupuesta el mes siguiente
   tc_base?: number; // moneda_base por unidad de la moneda del movimiento (costo histórico)
+  tags: string; // etiquetas normalizadas, separadas por espacio (sin '#')
   eliminado: boolean;
   notas: string;
   expand?: {

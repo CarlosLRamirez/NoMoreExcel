@@ -5,6 +5,19 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.7.0] - 2026-06-17
+
+### Añadido
+- **Etiquetas (tags) por movimiento.** Campo `movimientos.tags` (texto, normalizado por
+  el hook: minúsculas, sin `#`, sin duplicados). Se etiquetan gastos e ingresos (ej.
+  `#cumplevictor #viajeperu`) desde el modal, con autocompletado de etiquetas existentes.
+  - **Búsqueda:** filtro por etiqueta en Movimientos; clic en un chip de etiqueta filtra.
+  - **Reporte:** nueva sección "(c) Por etiqueta" en Reportes (gasto/ingreso/#mov por tag
+    en el rango), con enlace a los movimientos de cada etiqueta.
+  - **CSV:** nueva columna `tags` en export/import/ejemplo.
+  - Transparente: no afecta saldos, patrimonio, presupuesto ni ningún otro cálculo.
+  - Migración `1750000900`.
+
 ## [1.6.1] - 2026-06-17
 
 ### Mejorado (móvil)

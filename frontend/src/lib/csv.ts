@@ -13,6 +13,7 @@ export const CSV_COLUMNS = [
   "conciliado",
   "reconciliado",
   "ingreso_proximo_mes",
+  "tags",
   "notas",
 ] as const;
 
@@ -45,6 +46,7 @@ export function exportToCsv(
       conciliado: m.conciliado ? "true" : "false",
       reconciliado: m.reconciliado ? "true" : "false",
       ingreso_proximo_mes: m.ingreso_proximo_mes ? "true" : "false",
+      tags: m.tags || "",
       notas: m.notas || "",
     };
     lines.push(CSV_COLUMNS.map((c) => escapeField(fila[c])).join(","));
@@ -71,6 +73,7 @@ export function exampleCsv(): string {
       conciliado: "false",
       reconciliado: "false",
       ingreso_proximo_mes: "false",
+      tags: "",
       notas: "",
     },
     {
@@ -84,6 +87,7 @@ export function exampleCsv(): string {
       conciliado: "true",
       reconciliado: "false",
       ingreso_proximo_mes: "false",
+      tags: "#ejemplo",
       notas: "compra semanal",
     },
     {
@@ -97,6 +101,7 @@ export function exampleCsv(): string {
       conciliado: "false",
       reconciliado: "false",
       ingreso_proximo_mes: "false",
+      tags: "",
       notas: "",
     },
     {
@@ -110,6 +115,7 @@ export function exampleCsv(): string {
       conciliado: "false",
       reconciliado: "false",
       ingreso_proximo_mes: "false",
+      tags: "",
       notas: "",
     },
   ];

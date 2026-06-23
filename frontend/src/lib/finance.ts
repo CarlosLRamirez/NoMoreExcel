@@ -330,3 +330,59 @@ export function ingresoVsGastoPorMes(
     .map(([mes, v]) => ({ mes, ...v }))
     .sort((a, b) => a.mes.localeCompare(b.mes));
 }
+
+// --------------------------- Etiquetas (tags) ---------------------------
+
+/** Parsea el campo `tags` (string normalizado, separado por espacio) a un arreglo. */
+export function parseTags(tags: string | undefined): string[] {
+  if (!tags) return [];
+  return tags.trim().split(/\s+/).filter(Boolean);
+}
+
+export interface TagTotal {
+  tag: string;
+  ingreso: number; // centavos en moneda_base
+  gasto: number; // centavos en moneda_base (positivo)
+  conteo: number;
+}
+
+/**
+ * Reporte por etiqueta en un rango de fechas (consolidado en moneda_base).
+ * Un movimiento con varias etiquetas suma a cada una. Las transferencias se ignoran.
+ */
+export function totalesPorTag(
+  movimientos: Movimiento[],
+  desde: string,
+  hasta: string,
+  settings: Settings | null
+): TagTotal[] {
+  const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
+  const tc = settings?.tipo_cambio_usd ?? 0;
+  const acc = new Map<string, TagTotal>();
+  for (const m of movimientos) {
+    if (m.eliminado || m.tipo === "transferencia") continue;
+    const f = (m.fecha || "").slice(0, 10);
+    if ((desde && f < desde) || (hasta && f > hasta)) continue;
+    const tags = parseTags(m.tags);
+    if (tags.length === 0) continue;
+    const base = convertCents(Math.abs(m.monto), m.moneda, monedaBase, tc);
+    for (const tag of tags) {
+      const cur = acc.get(tag) ?? { tag, ingreso: 0, gasto: 0, conteo: 0 };
+      if (m.tipo === "ingreso") cur.ingreso += base;
+      else cur.gasto += base;
+      cur.conteo += 1;
+      acc.set(tag, cur);
+    }
+  }
+  return [...acc.values()].sort((a, b) => b.gasto - a.gasto || b.ingreso - a.ingreso);
+}
+
+/** Lista de todas las etiquetas existentes (para autocompletar/sugerir). */
+export function todasLasTags(movimientos: Movimiento[]): string[] {
+  const set = new Set<string>();
+  for (const m of movimientos) {
+    if (m.eliminado) continue;
+    for (const t of parseTags(m.tags)) set.add(t);
+  }
+  return [...set].sort();
+}

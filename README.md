@@ -138,7 +138,7 @@ Queda como ícono en pantalla, a pantalla completa (`display: standalone`). Íco
 - **cuentas**: `usuario`, `nombre`, `tipo` (`monetaria|ahorro|tarjeta_credito|efectivo`), `moneda` (`GTQ|USD`), `saldo_inicial` (centavos), `limite_credito`/`dia_corte`/`dia_pago` (solo TC), `activa`.
 - **grupos**: `usuario`, `nombre`, `orden`, `activa` — grupos de categorías (estilo YNAB).
 - **categorias**: `usuario`, `nombre`, `tipo` (`ingreso|gasto`), `grupo` (relation→grupos), `orden` (dentro del grupo), `padre` (reservado), `activa`.
-- **movimientos**: `usuario`, `fecha`, `cuenta`, `categoria`, `tipo` (`ingreso|gasto|transferencia`), `monto` (centavos con signo), `moneda` (= `cuenta.moneda`, denormalizada), `descripcion`, `transfer_id`, `tipo_cambio` (solo cross-currency), `conciliado`, `eliminado`, `notas`.
+- **movimientos**: `usuario`, `fecha`, `cuenta`, `categoria`, `tipo` (`ingreso|gasto|transferencia`), `monto` (centavos con signo), `moneda` (= `cuenta.moneda`, denormalizada), `descripcion`, `transfer_id`, `tipo_cambio` (solo cross-currency), `conciliado`, `reconciliado`, `ingreso_proximo_mes`, `tc_base`, `tags` (etiquetas normalizadas), `eliminado`, `notas`.
 - **presupuestos**: `usuario`, `categoria`, `mes` (`YYYY-MM`), `monto` (centavos, en moneda_base). Único por `(usuario, categoria, mes)`. Presupuesto mensual por categoría (estilo YNAB); el total del grupo se calcula como suma de sus categorías.
 - **settings**: `usuario`, `moneda_base`, `tipo_cambio_usd` (USD→GTQ manual, solo para consolidar).
 
@@ -239,7 +239,11 @@ Para guardar dinero hacia una meta: crea una categoría (ej. "Vacaciones") y **a
 
 ## CSV
 
-Columnas canónicas: `fecha` (YYYY-MM-DD), `cuenta` (nombre), `categoria` (nombre, vacío si transferencia), `tipo`, `monto` (decimal en la moneda de la cuenta, ej. `-1234.56`), `descripcion`, `transfer_id` (opcional), `conciliado` (`true`/`false`), `reconciliado` (`true`/`false`, opcional), `notas`. El import tolera símbolos de moneda y separadores de miles en `monto` (ej. `"Q2,000.00"`).
+Columnas canónicas: `fecha` (YYYY-MM-DD), `cuenta` (nombre), `categoria` (nombre, vacío si transferencia), `tipo`, `monto` (decimal en la moneda de la cuenta, ej. `-1234.56`), `descripcion`, `transfer_id` (opcional), `conciliado` (`true`/`false`), `reconciliado` (`true`/`false`, opcional), `ingreso_proximo_mes` (opcional), `tags` (etiquetas separadas por espacio, opcional), `notas`. El import tolera símbolos de moneda y separadores de miles en `monto` (ej. `"Q2,000.00"`).
+
+### Etiquetas (tags)
+
+Cualquier gasto o ingreso puede llevar **etiquetas** (ej. `#cumplevictor #viajeperu`) en el campo `tags` del movimiento. Se normalizan en el servidor (minúsculas, sin `#`, sin duplicados). Permiten **filtrar** movimientos por etiqueta y ver el reporte **"Por etiqueta"** (gasto/ingreso por tag en un rango). Son transparentes: no afectan saldos, patrimonio, presupuesto ni reportes por categoría.
 
 - **Import:** resuelve por nombre; no crea cuentas/categorías silenciosamente; convierte decimal→centavos; fija `moneda` desde la cuenta; valida filas con mismo `transfer_id` como transferencia balanceada; atómico por archivo.
 - **Export:** vuelca movimientos no eliminados al mismo esquema (monto decimal legible).

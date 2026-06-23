@@ -409,6 +409,18 @@ th.num .th-inner {
   color: var(--muted);
 }
 
+.tag-chip {
+  border: none;
+  cursor: pointer;
+  margin-left: 6px;
+  font-size: 11px;
+  background: #eef1f5;
+  color: var(--primary);
+}
+.tag-chip:hover {
+  background: #e1e7f5;
+}
+
 tr.row-highlight td {
   background: #fff6d6;
   transition: background 0.4s ease;
