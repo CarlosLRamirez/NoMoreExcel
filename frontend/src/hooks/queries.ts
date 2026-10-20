@@ -280,3 +280,29 @@ export function useSaveSettings() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["settings"] }),
   });
 }
+
+// --------------------------- Backup / Fresh start ---------------------------
+/** Respaldo JSON de todos los datos del usuario (incluye movimientos eliminados). */
+export function fetchBackup() {
+  return pb.send<Record<string, unknown>>("/api/backup", { method: "GET" });
+}
+
+export interface ResetResult {
+  ok: boolean;
+  movimientos: number;
+  presupuestos: number;
+  cuentas: number;
+}
+
+/** Borra movimientos y presupuestos; fija saldo_inicial por cuenta (centavos, 0 si se omite). */
+export function useReset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (saldos: Record<string, number>) =>
+      pb.send<ResetResult>("/api/reset", {
+        method: "POST",
+        body: { confirmacion: "BORRAR", saldos },
+      }),
+    onSuccess: () => qc.invalidateQueries(),
+  });
+}
