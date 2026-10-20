@@ -5,6 +5,20 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.8.0] - 2026-10-20
+
+### Añadido
+- **Backup y "empezar de cero"** en Ajustes.
+  - **Descargar backup:** `GET /api/backup` devuelve un JSON con todos los datos del
+    usuario (cuentas, grupos, categorías, movimientos —incluidos los eliminados—,
+    presupuestos y settings). Es por usuario; no reemplaza el backup de PocketBase.
+  - **Empezar de cero:** `POST /api/reset` (atómico, solo el usuario autenticado) borra
+    físicamente todos los movimientos y presupuestos, conserva cuentas/grupos/categorías/
+    ajustes, fija el `saldo_inicial` de cada cuenta al saldo real indicado (vacío = 0;
+    editable después en Cuentas), limpia `ultima_conciliacion` y congela `tc_base_inicial`
+    de cuentas en moneda extranjera a la tasa actual. La UI descarga el backup
+    automáticamente antes de borrar y pide escribir `BORRAR`.
+
 ## [1.7.0] - 2026-06-17
 
 ### Añadido

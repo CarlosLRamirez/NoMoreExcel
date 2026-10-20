@@ -237,6 +237,13 @@ Cuando entra dinero para "ponerte al día" y quieres que **resetee tanto el patr
 ### Ahorro / metas (sinking funds)
 Para guardar dinero hacia una meta: crea una categoría (ej. "Vacaciones") y **asígnale** monto cada mes sin gastar. La columna **Disponible (acum.)** muestra el saldo creciendo mes a mes (Q500 → Q1,000 → …). Cuando lo uses, registras el gasto contra esa categoría. Alternativamente, una **cuenta de ahorro dedicada** y mueves el dinero con **transferencias** (el saldo de la cuenta es tu fondo).
 
+## Backup y empezar de cero
+
+En **Ajustes → Backup y empezar de cero**:
+
+- **Descargar backup:** JSON con todos tus datos (`GET /api/backup`). Es un respaldo por usuario; para un respaldo restaurable de toda la base usa **Settings → Backups** del panel admin.
+- **Empezar de cero…:** borra todos tus movimientos y todo tu presupuesto (`POST /api/reset`, atómico) y conserva cuentas, grupos, categorías y ajustes. Por cada cuenta indicas el saldo real de hoy, que pasa a ser su `saldo_inicial` (vacío = 0; lo puedes corregir después en **Cuentas**). Antes de borrar se descarga el backup automáticamente. No se puede deshacer desde la app.
+
 ## CSV
 
 Columnas canónicas: `fecha` (YYYY-MM-DD), `cuenta` (nombre), `categoria` (nombre, vacío si transferencia), `tipo`, `monto` (decimal en la moneda de la cuenta, ej. `-1234.56`), `descripcion`, `transfer_id` (opcional), `conciliado` (`true`/`false`), `reconciliado` (`true`/`false`, opcional), `ingreso_proximo_mes` (opcional), `tags` (etiquetas separadas por espacio, opcional), `notas`. El import tolera símbolos de moneda y separadores de miles en `monto` (ej. `"Q2,000.00"`).
