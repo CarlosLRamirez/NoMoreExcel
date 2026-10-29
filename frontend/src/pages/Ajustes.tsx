@@ -159,7 +159,8 @@ function ZonaPeligrosa() {
           </p>
           <p className="muted">
             Escribe el saldo real de hoy de cada cuenta (vacío = 0). Si no lo tienes a mano,
-            déjalo vacío y luego edítalo en Cuentas → saldo inicial.
+            déjalo vacío y luego edítalo en Cuentas → saldo inicial. Préstamos y tarjetas: la
+            deuda va en negativo.
           </p>
           <SaldosTabla saldos={saldos} setSaldos={setSaldos} />
           <div className="field">

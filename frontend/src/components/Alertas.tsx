@@ -56,7 +56,7 @@ export function Alertas() {
   }
 
   // 3) Categorías que se pasaron del presupuesto este mes
-  const spentMap = gastoEnMesPorCategoria(movimientos, mes, settings ?? null);
+  const spentMap = gastoEnMesPorCategoria(movimientos, mes, settings ?? null, cuentas);
   const budgetMap = new Map(
     allPresupuestos.filter((p) => p.mes === mes).map((p) => [p.categoria, p.monto])
   );

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useCategorias,
+  useCuentas,
   useGrupos,
   useMovimientos,
   usePresupuestos,
@@ -41,6 +42,7 @@ function Barra({ spent, budget }: { spent: number; budget: number }) {
 export function Presupuesto() {
   const { data: grupos = [] } = useGrupos();
   const { data: categorias = [] } = useCategorias();
+  const { data: cuentas = [] } = useCuentas();
   const { data: movimientos = [] } = useMovimientos();
   const { data: settings } = useSettings();
   const [mes, setMes] = useState(curMonth());
@@ -77,7 +79,7 @@ export function Presupuesto() {
     incluirOcultas ? [] : categorias.filter((c) => c.excluir_presupuesto).map((c) => c.id)
   );
   const disp = disponibleParaAsignar(movimientos, allPresupuestos, mes, settings ?? null, excluidasIds);
-  const balMap = balancesCategoria(movimientos, allPresupuestos, mes, settings ?? null);
+  const balMap = balancesCategoria(movimientos, allPresupuestos, mes, settings ?? null, cuentas);
   const bal = (id: string) =>
     balMap.get(id) ?? { asignadoMes: 0, gastadoMes: 0, disponible: 0 };
   const budgetMap = new Map(presupuestos.map((p) => [p.categoria, p.monto]));

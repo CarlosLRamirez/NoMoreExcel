@@ -2,7 +2,7 @@
 // ENTEROS en centavos.
 
 export type Moneda = "GTQ" | "USD";
-export type TipoCuenta = "monetaria" | "ahorro" | "tarjeta_credito" | "efectivo";
+export type TipoCuenta = "monetaria" | "ahorro" | "tarjeta_credito" | "efectivo" | "prestamo";
 export type TipoCategoria = "ingreso" | "gasto";
 export type TipoMovimiento = "ingreso" | "gasto" | "transferencia";
 
@@ -29,6 +29,11 @@ export interface Cuenta extends BaseRecord {
   activa: boolean;
   ultima_conciliacion?: string;
   tc_base_inicial?: number; // moneda_base por unidad de la moneda de la cuenta (saldo_inicial)
+  // solo prestamo: el saldo es la deuda (negativo)
+  monto_original?: number | null; // centavos, positivo
+  cuota?: number | null; // cuota mensual, centavos, positivo
+  tasa_anual?: number | null; // % anual
+  categoria_pago?: string; // categoría de gasto con la que se presupuesta la cuota
 }
 
 export interface Grupo extends BaseRecord {

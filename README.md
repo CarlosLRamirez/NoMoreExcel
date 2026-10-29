@@ -237,6 +237,15 @@ Cuando entra dinero para "ponerte al día" y quieres que **resetee tanto el patr
 ### Ahorro / metas (sinking funds)
 Para guardar dinero hacia una meta: crea una categoría (ej. "Vacaciones") y **asígnale** monto cada mes sin gastar. La columna **Disponible (acum.)** muestra el saldo creciendo mes a mes (Q500 → Q1,000 → …). Cuando lo uses, registras el gasto contra esa categoría. Alternativamente, una **cuenta de ahorro dedicada** y mueves el dinero con **transferencias** (el saldo de la cuenta es tu fondo).
 
+## Préstamos
+
+1. **Cuentas → Nueva cuenta**, tipo **Préstamo**: escribe la **deuda pendiente hoy** (en positivo; se guarda como saldo negativo), el monto original, la cuota mensual, la tasa anual (opcional, para estimar interés y cuotas restantes) y la **categoría de pago** (por defecto crea "Préstamo <nombre>").
+2. **Presupuesto:** asigna la cuota a esa categoría cada mes.
+3. **Resumen → Pagar cuota** en la tarjeta del préstamo: eliges la cuenta desde la que pagas y cuánto de la cuota es interés. El capital se registra como transferencia hacia el préstamo (baja la deuda, no cambia el patrimonio) y el interés como gasto en la categoría de pago (sí es gasto). Ambos cuentan como "gastado" de la categoría, así que cuadra con lo asignado.
+4. Cuando la deuda llega a 0 la tarjeta muestra **Saldado**; puedes desactivar la cuenta y la categoría.
+
+Una transferencia normal hacia la cuenta del préstamo (desde Movimientos) también cuenta como pago a capital en el presupuesto.
+
 ## Backup y empezar de cero
 
 En **Ajustes → Backup y empezar de cero**:

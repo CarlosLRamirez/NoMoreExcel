@@ -5,6 +5,22 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.9.0] - 2026-10-29
+
+### Añadido
+- **Préstamos (créditos).** Nuevo tipo de cuenta `prestamo` (migración `1750001000`): su
+  saldo es la deuda (negativo) y suma al patrimonio. Campos: monto original, cuota mensual,
+  tasa anual (opcional) y **categoría de pago**. Al crear el préstamo se puede crear la
+  categoría "Préstamo <nombre>" automáticamente (en el grupo Financiero).
+  - **Pagar cuota** (Resumen): `POST /api/prestamos/pagar`, atómico. El abono a capital es
+    una transferencia hacia el préstamo (baja la deuda) y el interés un gasto en la
+    categoría de pago. El capital no puede exceder la deuda; misma moneda que el préstamo.
+  - **Presupuesto:** las transferencias hacia un préstamo cuentan como gastado de su
+    categoría de pago, así que asignas la cuota cada mes y la categoría cuadra con cada pago
+    (capital + interés). En "Ingreso vs gasto" solo cuenta el interés (el capital no es gasto).
+  - Tarjeta del préstamo en Resumen con % pagado, cuotas restantes estimadas (con la tasa,
+    si se indica) e indicador **Saldado** cuando la deuda llega a 0.
+
 ## [1.8.0] - 2026-10-20
 
 ### Añadido

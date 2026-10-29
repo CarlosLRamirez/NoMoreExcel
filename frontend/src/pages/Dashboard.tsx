@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useCuentas, useMovimientos, useSettings, useReconcile } from "../hooks/queries";
 import type { ReconcileResult } from "../hooks/queries";
-import { saldosPorCuenta, patrimonio, type SaldoCuenta } from "../lib/finance";
+import { saldosPorCuenta, patrimonio, estadoPrestamo, type SaldoCuenta } from "../lib/finance";
 import { formatMoney, parseAmountToCents, centsToInput } from "../lib/money";
 import { Modal } from "../components/Modal";
 import { Alertas } from "../components/Alertas";
+import { PagarPrestamo } from "../components/PagarPrestamo";
 import type { Moneda } from "../lib/types";
 
 const TIPO_LABEL: Record<string, string> = {
@@ -12,6 +13,7 @@ const TIPO_LABEL: Record<string, string> = {
   ahorro: "Ahorro",
   tarjeta_credito: "Tarjeta de crédito",
   efectivo: "Efectivo",
+  prestamo: "Préstamo",
 };
 
 const hoy = () => new Date().toISOString().slice(0, 10);
@@ -27,6 +29,7 @@ export function Dashboard() {
   const [fecha, setFecha] = useState(hoy());
   const [reconError, setReconError] = useState("");
   const [reconResult, setReconResult] = useState<ReconcileResult | null>(null);
+  const [pagando, setPagando] = useState<SaldoCuenta | null>(null);
 
   if (cuentas.isLoading || movimientos.isLoading) return <p>Cargando…</p>;
 
@@ -115,6 +118,33 @@ export function Dashboard() {
                   )}
                 </div>
 
+                {s.cuenta.tipo === "prestamo" && (() => {
+                  const est = estadoPrestamo(s.cuenta, s.saldo);
+                  return (
+                    <div style={{ marginTop: 6 }}>
+                      {est.saldado ? (
+                        <span className="badge pos">✓ Saldado</span>
+                      ) : (
+                        <>
+                          <div style={{ background: "var(--border)", borderRadius: 4 }}>
+                            <div className="bar" style={{ width: `${Math.round(est.avance * 100)}%` }} />
+                          </div>
+                          <div className="muted">
+                            {Math.round(est.avance * 100)}% pagado
+                            {s.cuenta.monto_original
+                              ? ` de ${formatMoney(s.cuenta.monto_original, moneda)}`
+                              : ""}
+                            {est.cuotasRestantes !== null && ` · ~${est.cuotasRestantes} cuota(s) restantes`}
+                          </div>
+                          {s.cuenta.cuota ? (
+                            <div className="muted">Cuota: {formatMoney(s.cuenta.cuota, moneda)}</div>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {s.disponible !== null && (
                   <div className="muted">
                     Disponible: {formatMoney(s.disponible, moneda)} · Límite{" "}
@@ -128,15 +158,24 @@ export function Dashboard() {
                       Conciliada: {s.cuenta.ultima_conciliacion.slice(0, 10)}
                     </span>
                   )}
-                  <button className="link" onClick={() => abrirConciliar(s)}>
-                    Conciliar
-                  </button>
+                  <span>
+                    {s.cuenta.tipo === "prestamo" && s.saldo < 0 && (
+                      <button className="link" onClick={() => setPagando(s)}>
+                        Pagar cuota
+                      </button>
+                    )}
+                    <button className="link" onClick={() => abrirConciliar(s)}>
+                      Conciliar
+                    </button>
+                  </span>
                 </div>
               </div>
             );
           })}
         {saldos.length === 0 && <p className="muted">Aún no tienes cuentas. Crea una en “Cuentas”.</p>}
       </div>
+
+      {pagando && <PagarPrestamo prestamo={pagando} saldos={saldos} onClose={() => setPagando(null)} />}
 
       {target && (
         <Modal title={`Conciliar: ${target.cuenta.nombre}`} onClose={() => setTarget(null)}>
