@@ -12,6 +12,48 @@ export interface SaldoCuenta {
   disponible: number | null; // solo tarjeta_credito: limite_credito + saldo
 }
 
+// --------------------------- Préstamos ---------------------------
+
+/**
+ * Abonos a préstamos que cuentan como gasto de su categoría de pago en el presupuesto:
+ * la pata POSITIVA (entrada) de una transferencia hacia una cuenta `prestamo` con
+ * `categoria_pago`. Devuelve [categoriaId, monto positivo] o null.
+ */
+function abonoPrestamo(m: Movimiento, prestamos: Map<string, Cuenta>): [string, number] | null {
+  if (m.tipo !== "transferencia" || m.monto <= 0) return null;
+  const p = prestamos.get(m.cuenta);
+  return p?.categoria_pago ? [p.categoria_pago, m.monto] : null;
+}
+
+const mapaPrestamos = (cuentas: Cuenta[]) =>
+  new Map(cuentas.filter((c) => c.tipo === "prestamo").map((c) => [c.id, c]));
+
+export interface EstadoPrestamo {
+  deuda: number; // centavos pendientes (positivo)
+  pagado: number; // capital pagado respecto al monto original
+  avance: number; // 0..1
+  cuotasRestantes: number | null; // estimado; null si no hay cuota o no alcanza a cubrir el interés
+  interesEstimado: number; // interés de la próxima cuota (deuda × tasa/12)
+  saldado: boolean;
+}
+
+/** Estado de un préstamo a partir de su saldo actual (negativo = deuda). */
+export function estadoPrestamo(c: Cuenta, saldo: number): EstadoPrestamo {
+  const deuda = Math.max(0, -saldo);
+  const original = c.monto_original ?? 0;
+  const pagado = original > 0 ? Math.max(0, original - deuda) : 0;
+  const avance = original > 0 ? Math.min(1, pagado / original) : deuda === 0 ? 1 : 0;
+  const r = (c.tasa_anual ?? 0) / 100 / 12;
+  const interesEstimado = Math.round(deuda * r);
+  const cuota = c.cuota ?? 0;
+  let cuotasRestantes: number | null = null;
+  if (deuda === 0) cuotasRestantes = 0;
+  else if (cuota > 0 && r === 0) cuotasRestantes = Math.ceil(deuda / cuota);
+  else if (cuota > 0 && cuota > deuda * r)
+    cuotasRestantes = Math.ceil(-Math.log(1 - (r * deuda) / cuota) / Math.log(1 + r));
+  return { deuda, pagado, avance, cuotasRestantes, interesEstimado, saldado: deuda === 0 };
+}
+
 /** saldo = saldo_inicial + SUMA(monto de movimientos no eliminados de esa cuenta). */
 export function saldosPorCuenta(cuentas: Cuenta[], movimientos: Movimiento[]): SaldoCuenta[] {
   const sum = new Map<string, number>();
@@ -157,7 +199,8 @@ export function balancesCategoria(
   movimientos: Movimiento[],
   presupuestos: Presupuesto[],
   mes: string,
-  settings: Settings | null
+  settings: Settings | null,
+  cuentas: Cuenta[] = []
 ): Map<string, BalanceCategoria> {
   const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
   const tc = settings?.tipo_cambio_usd ?? 0;
@@ -169,15 +212,20 @@ export function balancesCategoria(
     if (p.mes === mes) asignadoMes.set(p.categoria, (asignadoMes.get(p.categoria) ?? 0) + p.monto);
   }
 
+  const prestamos = mapaPrestamos(cuentas);
   const cumGastado = new Map<string, number>();
   const gastadoMes = new Map<string, number>();
   for (const m of movimientos) {
-    if (m.eliminado || m.tipo !== "gasto") continue;
+    if (m.eliminado) continue;
+    // gasto normal, o abono a capital de un préstamo (cuenta como gasto de su categoría)
+    const abono = abonoPrestamo(m, prestamos);
+    if (m.tipo !== "gasto" && !abono) continue;
     const mm = (m.fecha || "").slice(0, 7);
     if (!mm || mm > mes) continue;
+    const cat = abono ? abono[0] : m.categoria;
     const conv = convertCents(Math.abs(m.monto), m.moneda, monedaBase, tc);
-    cumGastado.set(m.categoria, (cumGastado.get(m.categoria) ?? 0) + conv);
-    if (mm === mes) gastadoMes.set(m.categoria, (gastadoMes.get(m.categoria) ?? 0) + conv);
+    cumGastado.set(cat, (cumGastado.get(cat) ?? 0) + conv);
+    if (mm === mes) gastadoMes.set(cat, (gastadoMes.get(cat) ?? 0) + conv);
   }
 
   const out = new Map<string, BalanceCategoria>();
@@ -286,16 +334,21 @@ export function gastoPorGrupo(
 export function gastoEnMesPorCategoria(
   movimientos: Movimiento[],
   mes: string,
-  settings: Settings | null
+  settings: Settings | null,
+  cuentas: Cuenta[] = []
 ): Map<string, number> {
   const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
   const tc = settings?.tipo_cambio_usd ?? 0;
+  const prestamos = mapaPrestamos(cuentas);
   const acc = new Map<string, number>();
   for (const m of movimientos) {
-    if (m.eliminado || m.tipo !== "gasto") continue;
+    if (m.eliminado) continue;
+    const abono = abonoPrestamo(m, prestamos);
+    if (m.tipo !== "gasto" && !abono) continue;
     if (!(m.fecha || "").startsWith(mes)) continue;
+    const cat = abono ? abono[0] : m.categoria;
     const base = convertCents(Math.abs(m.monto), m.moneda, monedaBase, tc);
-    acc.set(m.categoria, (acc.get(m.categoria) ?? 0) + base);
+    acc.set(cat, (acc.get(cat) ?? 0) + base);
   }
   return acc;
 }

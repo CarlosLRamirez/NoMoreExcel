@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/auth";
+import { APP_BUILD_DATE, versionLabel } from "../lib/version";
 
 const links = [
   { to: "/", label: "Resumen", end: true },
@@ -29,6 +30,9 @@ export function Layout() {
         <button className="link" onClick={logout} style={{ textAlign: "left" }}>
           Cerrar sesión
         </button>
+        <div className="muted" style={{ fontSize: 11 }} title={`Build ${APP_BUILD_DATE}`}>
+          {versionLabel}
+        </div>
       </aside>
       <main className="main">
         <Outlet />

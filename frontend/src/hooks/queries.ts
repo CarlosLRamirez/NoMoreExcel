@@ -306,3 +306,25 @@ export function useReset() {
     onSuccess: () => qc.invalidateQueries(),
   });
 }
+
+// --------------------------- Préstamos ---------------------------
+export interface PagoPrestamoInput {
+  prestamo: string;
+  cuenta_origen: string;
+  fecha: string;
+  monto: number; // cuota total pagada (centavos)
+  interes: number; // parte de interés (centavos)
+  descripcion?: string;
+}
+
+export function usePagarPrestamo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: PagoPrestamoInput) =>
+      pb.send<{ ok: boolean; capital: number; interes: number; deuda_restante: number }>(
+        "/api/prestamos/pagar",
+        { method: "POST", body: data }
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["movimientos"] }),
+  });
+}

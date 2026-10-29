@@ -4,6 +4,7 @@ import { Modal } from "../components/Modal";
 import { centsToInput, formatMoney, parseAmountToCents } from "../lib/money";
 import { saldosPorCuenta } from "../lib/finance";
 import type { Moneda } from "../lib/types";
+import { APP_BUILD_DATE, versionLabel } from "../lib/version";
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 
@@ -74,6 +75,9 @@ export function Ajustes() {
         </div>
       </div>
       <ZonaPeligrosa />
+      <p className="muted" style={{ marginTop: 16 }}>
+        NoMoreExcel {versionLabel} · build {APP_BUILD_DATE}
+      </p>
     </div>
   );
 }
@@ -159,7 +163,8 @@ function ZonaPeligrosa() {
           </p>
           <p className="muted">
             Escribe el saldo real de hoy de cada cuenta (vacío = 0). Si no lo tienes a mano,
-            déjalo vacío y luego edítalo en Cuentas → saldo inicial.
+            déjalo vacío y luego edítalo en Cuentas → saldo inicial. Préstamos y tarjetas: la
+            deuda va en negativo.
           </p>
           <SaldosTabla saldos={saldos} setSaldos={setSaldos} />
           <div className="field">

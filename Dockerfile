@@ -4,6 +4,9 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
+# Commit mostrado en la app (no hay .git en el contexto de build)
+ARG GIT_SHA=""
+ENV GIT_SHA=$GIT_SHA
 RUN npm run build   # genera /app/dist (SPA + PWA)
 
 # ---------- Etapa 2: runtime con PocketBase ----------
