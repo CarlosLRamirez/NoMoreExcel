@@ -20,6 +20,13 @@ y el proyecto usa [SemVer](https://semver.org/lang/es/).
     (capital + interés). En "Ingreso vs gasto" solo cuenta el interés (el capital no es gasto).
   - Tarjeta del préstamo en Resumen con % pagado, cuotas restantes estimadas (con la tasa,
     si se indica) e indicador **Saldado** cuando la deuda llega a 0.
+- **Versión visible en la app:** `v<versión> · <commit>` en la barra lateral (escritorio) y
+  al final de Ajustes (también en móvil), con la fecha de build. La versión sale de
+  `frontend/package.json` y el commit del build-arg `GIT_SHA` que pasa el workflow.
+
+### Cambiado
+- Deploy: `flyctl deploy --local-only` (build en el runner de GitHub) en vez del builder
+  remoto, que cortaba la conexión a mitad del build.
 
 ## [1.8.0] - 2026-10-20
 

@@ -4,6 +4,7 @@ import { Modal } from "../components/Modal";
 import { centsToInput, formatMoney, parseAmountToCents } from "../lib/money";
 import { saldosPorCuenta } from "../lib/finance";
 import type { Moneda } from "../lib/types";
+import { APP_BUILD_DATE, versionLabel } from "../lib/version";
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 
@@ -74,6 +75,9 @@ export function Ajustes() {
         </div>
       </div>
       <ZonaPeligrosa />
+      <p className="muted" style={{ marginTop: 16 }}>
+        NoMoreExcel {versionLabel} · build {APP_BUILD_DATE}
+      </p>
     </div>
   );
 }

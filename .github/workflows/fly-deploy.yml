@@ -13,6 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      # Build en el runner de GitHub (--local-only) en vez del builder remoto de Fly/Depot,
+      # que cortaba la conexión a mitad del build ("rpc error: code = Unavailable ... EOF").
+      - run: flyctl deploy --local-only --build-arg GIT_SHA=${{ github.sha }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
