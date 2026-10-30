@@ -5,6 +5,13 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.11.1] - 2026-10-30
+
+### Cambiado
+- **Nuevo ícono de la app:** un barco naufragando de noche (fuente en `scripts/icon/icon.svg`,
+  render con `scripts/icon/render.mjs`). Reemplaza la moneda de `scripts/gen-icons.py`
+  (eliminado). Para verlo en el teléfono hay que reinstalar la PWA.
+
 ## [1.11.0] - 2026-10-30
 
 ### Añadido
