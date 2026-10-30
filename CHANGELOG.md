@@ -5,6 +5,23 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.11.0] - 2026-10-30
+
+### Añadido
+- **Registro rápido de gastos:** botón flotante **+** en todas las pantallas. Abre un panel
+  con Gasto/Ingreso, monto grande (teclado numérico), atajos con las 6 categorías más
+  usadas en los últimos 60 días (más un selector agrupado para las demás), el disponible
+  de la categoría antes → después del gasto, cuenta (recuerda la última usada en este
+  dispositivo), fecha local de hoy y descripción opcional. "Guardar y otro" deja el panel
+  abierto para capturar varios seguidos.
+- **Tema oscuro** (por defecto): gris pizarra, no negro, con menos brillo y contraste
+  alto en texto y montos. Selector en **Ajustes → Apariencia**: Oscuro / Claro /
+  Automático (sigue el sistema). Se guarda por dispositivo y se aplica antes de pintar,
+  sin parpadeo. Barra de estado y splash de la PWA en el color del tema.
+
+### Cambiado
+- Todos los colores del CSS pasan a variables (`:root`), incluidos los que estaban fijos.
+
 ## [1.10.0] - 2026-10-30
 
 ### Mejorado (móvil)
