@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Ícono de NoMoreExcel: barco naufragando. Fondo a sangre (sin transparencia, iOS);
+       el dibujo cabe en el 80% central para el recorte "maskable" de Android. -->
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f2a3a"/>
+      <stop offset="1" stop-color="#2b3d55"/>
+    </linearGradient>
+    <linearGradient id="mar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <mask id="creciente">
+      <rect width="512" height="512" fill="#fff"/>
+      <circle cx="384" cy="120" r="26" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" fill="url(#cielo)"/>
+  <!-- luna -->
+  <circle cx="372" cy="128" r="30" fill="#e6e9ee" opacity="0.9" mask="url(#creciente)"/>
+
+  <!-- barco inclinado, hundiéndose de proa -->
+  <g transform="rotate(-28 250 300)">
+    <!-- mástil -->
+    <rect x="236" y="120" width="12" height="170" rx="4" fill="#8a5a33"/>
+    <!-- vela rota -->
+    <path d="M250 136 L342 196 L300 214 L318 246 L250 262 Z" fill="#e6e9ee"/>
+    <!-- bandera -->
+    <path d="M242 120 L242 96 L282 104 L266 112 L282 122 Z" fill="#f87171"/>
+    <!-- casco -->
+    <path d="M126 284 L384 284 L344 350 L162 350 Z" fill="#b45309"/>
+    <path d="M126 284 L384 284 L376 298 L134 298 Z" fill="#78350f"/>
+    <!-- ojos de buey -->
+    <circle cx="200" cy="318" r="9" fill="#fde68a"/>
+    <circle cx="244" cy="318" r="9" fill="#fde68a"/>
+    <circle cx="288" cy="318" r="9" fill="#fde68a"/>
+  </g>
+
+  <!-- mar (tapa la parte hundida del barco) -->
+  <path d="M0 330
+           C 40 310, 80 310, 120 330
+           S 200 350, 240 330
+           S 320 310, 360 330
+           S 440 350, 512 326
+           L 512 512 L 0 512 Z" fill="url(#mar)"/>
+  <!-- cresta de olas -->
+  <path d="M0 330 C 40 310, 80 310, 120 330 S 200 350, 240 330 S 320 310, 360 330 S 440 350, 512 326"
+        fill="none" stroke="#bfdbfe" stroke-width="10" stroke-linecap="round" opacity="0.85"/>
+  <path d="M70 392 C 100 380, 130 380, 160 392 M300 404 C 330 392, 360 392, 390 404"
+        fill="none" stroke="#93c5fd" stroke-width="8" stroke-linecap="round" opacity="0.6"/>
+  <!-- burbujas -->
+  <circle cx="148" cy="296" r="9" fill="none" stroke="#bfdbfe" stroke-width="5"/>
+  <circle cx="122" cy="262" r="6" fill="none" stroke="#bfdbfe" stroke-width="4"/>
+  <circle cx="140" cy="232" r="4" fill="none" stroke="#bfdbfe" stroke-width="3"/>
+</svg>

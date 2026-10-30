@@ -130,7 +130,7 @@ La app es una **PWA** (manifest + service worker, vía `vite-plugin-pwa`). Una v
 - **Android / Chrome:** abre `https://TU-APP.fly.dev` → menú ⋮ → **Instalar app**.
 - **iPhone / Safari:** abre la URL → **Compartir** → **Agregar a inicio**.
 
-Queda como ícono en pantalla, a pantalla completa (`display: standalone`). Íconos en `frontend/public/` (generados por `scripts/gen-icons.py`).
+Queda como ícono en pantalla, a pantalla completa (`display: standalone`). Íconos en `frontend/public/`, generados desde `scripts/icon/icon.svg` con `scripts/icon/render.mjs` (ver el encabezado del script). Para cambiar el ícono, edita el SVG (o reemplaza los 3 PNG, mismo nombre y tamaño) y vuelve a instalar la PWA en el teléfono: el ícono se guarda al instalar.
 
 ## Modelo de datos (colecciones)
 
