@@ -5,6 +5,19 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.10.0] - 2026-10-30
+
+### Mejorado (móvil)
+- **Presupuesto en móvil rediseñado:** en lugar de la tabla (que ocultaba la columna
+  Asignado y no dejaba editar), una lista de categorías con letra grande: nombre, disponible
+  acumulado en una etiqueta de color, asignado/gastado del mes y barra de avance.
+  - **Tocar una categoría** abre un panel inferior para editar lo asignado: campo grande con
+    teclado numérico, vista previa del disponible resultante y atajos (**Cubrir negativo**,
+    **Lo gastado**, **Mes anterior**, **0**). También enlaza a los movimientos de la categoría.
+  - Navegación de mes con botones grandes; "Asignar lo gastado", "Copiar mes anterior",
+    "Exportar CSV" e "Incluir ocultas" quedan en **Más acciones**.
+  - En escritorio no cambia nada (misma tabla).
+
 ## [1.9.0] - 2026-10-29
 
 ### Añadido

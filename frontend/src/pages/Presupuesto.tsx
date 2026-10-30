@@ -16,6 +16,8 @@ import { balancesCategoria, disponibleParaAsignar } from "../lib/finance";
 import { formatMoney, parseAmountToCents, centsToInput } from "../lib/money";
 import { presupuestoToCsv, type PresupuestoCsvRow } from "../lib/csv";
 import type { Categoria } from "../lib/types";
+import { useIsMobile } from "../hooks/useMediaQuery";
+import { PresupuestoMovil } from "../components/PresupuestoMovil";
 
 const curMonth = () => new Date().toISOString().slice(0, 7);
 const shiftMonth = (mes: string, delta: number) => {
@@ -53,6 +55,7 @@ export function Presupuesto() {
   const copyPres = useCopyPresupuesto();
   const assignSpent = useAssignSpent();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const copiarMesAnterior = async () => {
     const prev = shiftMonth(mes, -1);
@@ -206,37 +209,91 @@ export function Presupuesto() {
     URL.revokeObjectURL(a.href);
   };
 
+  const navMes = (
+    <div className="month-nav">
+      <button onClick={() => setMes(shiftMonth(mes, -1))} title="Mes anterior">
+        ◀
+      </button>
+      {!isMobile && (
+        <input type="month" value={mes} onChange={(e) => e.target.value && setMes(e.target.value)} />
+      )}
+      <strong>{monthLabel(mes)}</strong>
+      <button onClick={() => setMes(shiftMonth(mes, 1))} title="Mes siguiente">
+        ▶
+      </button>
+    </div>
+  );
+
+  const acciones = (
+    <>
+      <label className="muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <input
+          type="checkbox"
+          style={{ width: "auto" }}
+          checked={incluirOcultas}
+          onChange={(e) => setIncluirOcultas(e.target.checked)}
+        />
+        Incluir ocultas
+      </label>
+      <button onClick={asignarGastado} disabled={assignSpent.isPending} title="Asigna a cada categoría lo gastado este mes (deja el mes en 0)">
+        Asignar lo gastado
+      </button>
+      <button onClick={copiarMesAnterior} disabled={copyPres.isPending}>
+        Copiar mes anterior
+      </button>
+      <button onClick={exportarCsv}>Exportar CSV</button>
+    </>
+  );
+
+  if (isMobile) {
+    const prev = shiftMonth(mes, -1);
+    const anterior = new Map(allPresupuestos.filter((p) => p.mes === prev).map((p) => [p.categoria, p.monto]));
+    const gruposMovil = [
+      ...gruposConGasto.map((g) => ({ id: g.id, nombre: g.nombre, cats: catsDe(g.id) })),
+      ...(sinGrupo.length ? [{ id: "", nombre: "Sin grupo", cats: sinGrupo }] : []),
+    ];
+    return (
+      <div className="bm-page">
+        <div className="bm-mes">{navMes}</div>
+        <div className={"card disponible-card" + (disp.disponible < 0 ? " neg" : "")}>
+          <div className="muted">Disponible para asignar</div>
+          <div className={"stat " + (disp.disponible < 0 ? "neg" : "pos")}>
+            {formatMoney(disp.disponible, base)}
+          </div>
+          {disp.disponible < 0 && (
+            <div className="error" style={{ marginBottom: 0 }}>
+              ⚠ Estás asignando más de lo que tienes disponible.
+            </div>
+          )}
+          <div className="bm-totales">
+            <span>Asignado {formatMoney(totalBudget, base)}</span>
+            <span>Gastado {formatMoney(totalSpent, base)}</span>
+          </div>
+        </div>
+        <PresupuestoMovil
+          grupos={gruposMovil}
+          bal={bal}
+          base={base}
+          asignadoMesAnterior={anterior}
+          guardando={setPres.isPending}
+          onGuardar={(categoria, monto) => setPres.mutateAsync({ categoria, mes, monto })}
+          onVerMovimientos={verMovimientos}
+        />
+        <details className="bm-acciones">
+          <summary>Más acciones</summary>
+          <div>{acciones}</div>
+        </details>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="page-head">
         <h2>Presupuesto</h2>
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <label className="muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <input
-              type="checkbox"
-              style={{ width: "auto" }}
-              checked={incluirOcultas}
-              onChange={(e) => setIncluirOcultas(e.target.checked)}
-            />
-            Incluir ocultas
-          </label>
-          <button onClick={asignarGastado} disabled={assignSpent.isPending} title="Asigna a cada categoría lo gastado este mes (deja el mes en 0)">
-            Asignar lo gastado
-          </button>
-          <button onClick={copiarMesAnterior} disabled={copyPres.isPending}>
-            Copiar mes anterior
-          </button>
-          <button onClick={exportarCsv}>Exportar CSV</button>
-          <div className="month-nav">
-            <button onClick={() => setMes(shiftMonth(mes, -1))} title="Mes anterior">
-              ◀
-            </button>
-          <input type="month" value={mes} onChange={(e) => e.target.value && setMes(e.target.value)} />
-          <strong>{monthLabel(mes)}</strong>
-            <button onClick={() => setMes(shiftMonth(mes, 1))} title="Mes siguiente">
-              ▶
-            </button>
-          </div>
+          {acciones}
+          {navMes}
         </div>
       </div>
 
