@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/auth";
 import { APP_BUILD_DATE, versionLabel } from "../lib/version";
+import { RegistroRapido } from "./RegistroRapido";
 
 const links = [
   { to: "/", label: "Resumen", end: true },
@@ -37,6 +38,7 @@ export function Layout() {
       <main className="main">
         <Outlet />
       </main>
+      <RegistroRapido />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { centsToInput, formatMoney, parseAmountToCents } from "../lib/money";
 import { saldosPorCuenta } from "../lib/finance";
 import type { Moneda } from "../lib/types";
 import { APP_BUILD_DATE, versionLabel } from "../lib/version";
+import { getTema, setTema, type Tema } from "../lib/theme";
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 
@@ -74,6 +75,7 @@ export function Ajustes() {
           </button>
         </div>
       </div>
+      <SelectorTema />
       <ZonaPeligrosa />
       <p className="muted" style={{ marginTop: 16 }}>
         NoMoreExcel {versionLabel} · build {APP_BUILD_DATE}
@@ -243,5 +245,34 @@ function SaldosTabla({
         })}
       </tbody>
     </table>
+  );
+}
+
+function SelectorTema() {
+  const [tema, setT] = useState<Tema>(getTema());
+  const cambiar = (t: Tema) => {
+    setT(t);
+    setTema(t);
+  };
+  return (
+    <div className="card" style={{ maxWidth: 460, marginTop: 16 }}>
+      <h3 style={{ marginTop: 0 }}>Apariencia</h3>
+      <div className="segmented">
+        {(
+          [
+            ["dark", "Oscuro"],
+            ["light", "Claro"],
+            ["auto", "Automático"],
+          ] as [Tema, string][]
+        ).map(([v, l]) => (
+          <button key={v} className={tema === v ? "active" : ""} onClick={() => cambiar(v)}>
+            {l}
+          </button>
+        ))}
+      </div>
+      <p className="muted" style={{ marginBottom: 0 }}>
+        Se guarda en este dispositivo. Automático sigue el tema del sistema.
+      </p>
+    </div>
   );
 }

@@ -5,6 +5,11 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./hooks/auth";
 import App from "./App";
 import "./index.css";
+import { aplicarTema } from "./lib/theme";
+
+aplicarTema();
+// En modo automático, seguir los cambios del tema del sistema.
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => aplicarTema());
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } },
