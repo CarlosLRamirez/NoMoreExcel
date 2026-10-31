@@ -5,6 +5,15 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.12.0] - 2026-10-31
+
+### Añadido
+- **"Asignar lo disponible…"** en Presupuesto (escritorio y móvil): botón en la tarjeta de
+  *Disponible para asignar* (solo si hay saldo positivo). Abre un panel para elegir una o
+  varias categorías con buscador; reparte el disponible en partes iguales al centavo
+  (los centavos sobrantes van a las primeras), cada monto es editable y un contador indica
+  cuánto falta o si te pasas. Suma a lo ya asignado en el mes.
+
 ## [1.11.2] - 2026-10-31
 
 ### Corregido

@@ -18,6 +18,7 @@ import { presupuestoToCsv, type PresupuestoCsvRow } from "../lib/csv";
 import type { Categoria } from "../lib/types";
 import { useIsMobile } from "../hooks/useMediaQuery";
 import { PresupuestoMovil } from "../components/PresupuestoMovil";
+import { AsignarDisponible } from "../components/AsignarDisponible";
 
 const curMonth = () => new Date().toISOString().slice(0, 7);
 const shiftMonth = (mes: string, delta: number) => {
@@ -56,6 +57,7 @@ export function Presupuesto() {
   const assignSpent = useAssignSpent();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [asignandoDisp, setAsignandoDisp] = useState(false);
 
   const copiarMesAnterior = async () => {
     const prev = shiftMonth(mes, -1);
@@ -256,13 +258,38 @@ export function Presupuesto() {
     </>
   );
 
+  const gruposVisibles = [
+    ...gruposConGasto.map((g) => ({ id: g.id, nombre: g.nombre, cats: catsDe(g.id) })),
+    ...(sinGrupo.length ? [{ id: "", nombre: "Sin grupo", cats: sinGrupo }] : []),
+  ];
+
+  // Botón + panel para repartir lo que queda en "Disponible para asignar".
+  const asignarDisp = (
+    <>
+      {disp.disponible > 0 && (
+        <button className="primary btn-asignar-disp" onClick={() => setAsignandoDisp(true)}>
+          Asignar lo disponible…
+        </button>
+      )}
+      {asignandoDisp && (
+        <AsignarDisponible
+          disponible={disp.disponible}
+          base={base}
+          mesLabel={monthLabel(mes)}
+          grupos={gruposVisibles}
+          bal={bal}
+          guardando={assignSpent.isPending}
+          onAsignar={(items) => assignSpent.mutateAsync(items.map((it) => ({ ...it, mes })))}
+          onCerrar={() => setAsignandoDisp(false)}
+        />
+      )}
+    </>
+  );
+
   if (isMobile) {
     const prev = shiftMonth(mes, -1);
     const anterior = new Map(allPresupuestos.filter((p) => p.mes === prev).map((p) => [p.categoria, p.monto]));
-    const gruposMovil = [
-      ...gruposConGasto.map((g) => ({ id: g.id, nombre: g.nombre, cats: catsDe(g.id) })),
-      ...(sinGrupo.length ? [{ id: "", nombre: "Sin grupo", cats: sinGrupo }] : []),
-    ];
+    const gruposMovil = gruposVisibles;
     return (
       <div className="bm-page">
         <div className="bm-mes">{navMes}</div>
@@ -280,6 +307,7 @@ export function Presupuesto() {
             <span>Asignado {formatMoney(totalBudget, base)}</span>
             <span>Gastado {formatMoney(totalSpent, base)}</span>
           </div>
+          {asignarDisp}
         </div>
         <PresupuestoMovil
           grupos={gruposMovil}
@@ -318,6 +346,7 @@ export function Presupuesto() {
           {formatMoney(disp.ingresosMes, base)} − asignado en {monthLabel(mes)}{" "}
           {formatMoney(disp.asignadoMes, base)}. Lo que no asignes se acumula al mes siguiente.
         </p>
+        {asignarDisp}
         {disp.disponible < 0 && (
           <div className="error" style={{ marginBottom: 0 }}>
             ⚠ Estás asignando más de lo que tienes disponible.
