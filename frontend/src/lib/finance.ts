@@ -439,3 +439,32 @@ export function todasLasTags(movimientos: Movimiento[]): string[] {
   }
   return [...set].sort();
 }
+
+// --------------------------- Resumen: gasto del mes ---------------------------
+
+/**
+ * Gasto REAL acumulado por día de `mes` ("YYYY-MM") en moneda_base: índice d-1 = total
+ * gastado del día 1 al d. Solo movimientos `gasto` (sin transferencias, así que el capital
+ * de préstamos no cuenta) y sin categorías excluidas (ajustes). Igual criterio que Reportes.
+ */
+export function gastoAcumuladoPorDia(
+  movimientos: Movimiento[],
+  mes: string,
+  settings: Settings | null,
+  excluidas: Set<string> = new Set()
+): number[] {
+  const monedaBase: Moneda = settings?.moneda_base ?? "GTQ";
+  const tc = settings?.tipo_cambio_usd ?? 0;
+  const [y, m] = mes.split("-").map(Number);
+  const dias = new Date(y, m, 0).getDate();
+  const porDia = new Array<number>(dias).fill(0);
+  for (const mv of movimientos) {
+    if (mv.eliminado || mv.tipo !== "gasto" || excluidas.has(mv.categoria)) continue;
+    const f = (mv.fecha || "").slice(0, 10);
+    if (!f.startsWith(mes)) continue;
+    const d = Number(f.slice(8, 10));
+    porDia[d - 1] += convertCents(Math.abs(mv.monto), mv.moneda, monedaBase, tc);
+  }
+  for (let i = 1; i < dias; i++) porDia[i] += porDia[i - 1];
+  return porDia;
+}
