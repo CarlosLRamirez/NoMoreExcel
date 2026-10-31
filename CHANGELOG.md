@@ -5,6 +5,16 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.11.2] - 2026-10-31
+
+### Corregido
+- **"Asignar lo gastado" borraba ahorros:** ponía asignado = gastado en *todas* las
+  categorías, así que una categoría de Ahorro (asignada y sin gasto) quedaba en 0 y su
+  dinero volvía a "Disponible para asignar"; también recortaba lo sobrante de las demás.
+  Se reemplaza por **"Cubrir sobregastos"**: solo sube lo asignado en las categorías con
+  disponible acumulado negativo, lo justo para dejarlas en 0, y muestra cuánto asignará
+  antes de confirmar. Nunca baja una asignación.
+
 ## [1.11.1] - 2026-10-30
 
 ### Cambiado

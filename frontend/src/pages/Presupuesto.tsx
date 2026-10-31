@@ -110,20 +110,27 @@ export function Presupuesto() {
     setPres.mutate({ categoria: catId, mes, monto: Number.isNaN(cents) ? 0 : cents });
   };
 
-  // Asigna a cada categoría visible exactamente lo gastado este mes (YNAB: "budget = activity").
-  // Como "Gastado" ya está en centavos enteros de moneda base, los dólares cuadran exacto.
-  const asignarGastado = async () => {
+  // Cubre los sobregastos (YNAB "cover overspending"): a cada categoría visible con disponible
+  // acumulado NEGATIVO le sube lo asignado este mes justo para dejarla en 0. Nunca baja una
+  // asignación, así que no toca ahorros ni fondos acumulados (antes ponía asignado = gastado
+  // en todas y borraba, p. ej., lo asignado a "Ahorro" en un mes sin gasto).
+  const cubrirSobregastos = async () => {
+    const items = catsGasto
+      .map((c) => ({ c, b: bal(c.id) }))
+      .filter(({ b }) => b.disponible < 0)
+      .map(({ c, b }) => ({ categoria: c.id, mes, monto: b.asignadoMes - b.disponible }));
+    if (items.length === 0) {
+      alert("No hay categorías en negativo este mes.");
+      return;
+    }
+    const total = items.reduce((a, it) => a + (it.monto - bal(it.categoria).asignadoMes), 0);
     if (
       !confirm(
-        "¿Asignar a cada categoría exactamente lo gastado este mes? Sobrescribe las asignaciones de este mes."
+        `¿Cubrir ${items.length} categoría(s) en negativo? Se asignarán ${formatMoney(total, base)} más ` +
+          `este mes para dejarlas en 0. Las demás categorías no cambian.`
       )
     )
       return;
-    const items = catsGasto
-      .map((c) => ({ categoria: c.id, mes, monto: bal(c.id).gastadoMes, cur: bal(c.id).asignadoMes }))
-      .filter((it) => it.monto !== it.cur)
-      .map(({ categoria, mes: m, monto }) => ({ categoria, mes: m, monto }));
-    if (items.length === 0) return;
     await assignSpent.mutateAsync(items);
   };
 
@@ -235,8 +242,12 @@ export function Presupuesto() {
         />
         Incluir ocultas
       </label>
-      <button onClick={asignarGastado} disabled={assignSpent.isPending} title="Asigna a cada categoría lo gastado este mes (deja el mes en 0)">
-        Asignar lo gastado
+      <button
+        onClick={cubrirSobregastos}
+        disabled={assignSpent.isPending}
+        title="Sube lo asignado solo en las categorías en negativo para dejarlas en 0; no toca las demás"
+      >
+        Cubrir sobregastos
       </button>
       <button onClick={copiarMesAnterior} disabled={copyPres.isPending}>
         Copiar mes anterior
