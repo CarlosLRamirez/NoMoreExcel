@@ -1057,3 +1057,67 @@ input.sheet-input {
 .main {
   padding-bottom: 96px;
 }
+
+/* Asignar lo disponible */
+.ad-sel {
+  margin-bottom: 8px;
+}
+.ad-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ad-fila .ad-nombre {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.ad-fila input {
+  width: 120px;
+  text-align: right;
+}
+.ad-resta {
+  font-size: 14px;
+  color: var(--muted);
+  text-align: right;
+}
+.ad-lista {
+  max-height: 40vh;
+  overflow: auto;
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+}
+.ad-grupo {
+  padding: 8px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+label.ad-cat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0;
+  font-size: 16px;
+  color: var(--text);
+  cursor: pointer;
+}
+label.ad-cat input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+label.ad-cat span:nth-of-type(1) {
+  flex: 1;
+}
+.ad-disp {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.btn-asignar-disp {
+  margin-top: 10px;
+}
