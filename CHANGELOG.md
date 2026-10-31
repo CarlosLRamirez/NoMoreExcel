@@ -5,6 +5,22 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.13.0] - 2026-10-31
+
+### Mejorado
+- **Resumen rediseñado como vistazo rápido:**
+  - **Patrimonio neto** y **Disponible para asignar** arriba (este último enlaza a Presupuesto).
+  - **Gráfica "Gasto de este mes"** (SVG propio, sin librerías): gasto acumulado día a día
+    vs el mes anterior y vs el **ritmo del presupuesto** (asignado repartido parejo en el mes).
+    Texto: cuánto llevas, % de lo asignado, % del mes transcurrido y cuánto vas arriba/abajo
+    del ritmo. Cuenta solo gasto real (sin transferencias ni capital de préstamos, sin
+    categorías excluidas), igual que Reportes.
+  - **Más gasto del mes:** top 5 categorías con barra y disponible/sobregastado; enlazan a sus
+    movimientos del mes.
+  - Alertas, **últimos 5 movimientos** y, al final, **Saldos por cuenta plegable**: cerrado
+    muestra totales por grupo (bancos y efectivo, tarjetas, préstamos); el estado
+    abierto/cerrado se recuerda en el dispositivo.
+
 ## [1.12.0] - 2026-10-31
 
 ### Añadido
