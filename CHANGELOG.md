@@ -5,6 +5,16 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.14.0] - 2026-11-10
+
+### Añadido
+- **Etiquetas en el registro rápido (+):** campo de etiquetas con atajos de las 6 más usadas
+  (últimos 90 días; tocar una la agrega o la quita). Al elegir una categoría con el campo
+  vacío, propone las etiquetas del último movimiento de esa categoría (p. ej. "Café – ventas"
+  → `cafe`). "Guardar y otro" conserva las etiquetas.
+- **Columna "Neto" (ingreso − gasto) en Reportes → Por etiqueta**, para ver la ganancia de
+  un proyecto o negocio etiquetado (p. ej. `#cafe`).
+
 ## [1.13.0] - 2026-10-31
 
 ### Mejorado
