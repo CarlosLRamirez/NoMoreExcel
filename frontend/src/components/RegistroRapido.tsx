@@ -8,7 +8,7 @@ import {
   useSaveMovimiento,
   useSettings,
 } from "../hooks/queries";
-import { balancesCategoria } from "../lib/finance";
+import { balancesCategoria, parseTags } from "../lib/finance";
 import { formatMoney, parseAmountToCents } from "../lib/money";
 import type { Categoria, TipoCategoria } from "../lib/types";
 
@@ -73,6 +73,7 @@ function PanelRegistro({ onCerrar, onGuardado }: { onCerrar: () => void; onGuard
   const [cuenta, setCuenta] = useState(leer(KEY_CUENTA));
   const [fecha, setFecha] = useState(hoyLocal());
   const [descripcion, setDescripcion] = useState("");
+  const [tags, setTags] = useState("");
   const [error, setError] = useState("");
   const montoRef = useRef<HTMLInputElement>(null);
 
@@ -114,6 +115,34 @@ function PanelRegistro({ onCerrar, onGuardado }: { onCerrar: () => void; onGuard
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupos, categorias, tipo]);
 
+  // Etiquetas más usadas (últimos 90 días) como atajos.
+  const tagsFrecuentes = useMemo(() => {
+    const desde = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10);
+    const conteo = new Map<string, number>();
+    for (const m of movimientos) {
+      if (m.eliminado || (m.fecha || "") < desde) continue;
+      for (const t of parseTags(m.tags)) conteo.set(t, (conteo.get(t) ?? 0) + 1);
+    }
+    return [...conteo.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([t]) => t);
+  }, [movimientos]);
+
+  // Mismo criterio que el hook del servidor: separadas por espacio/coma, sin '#', minúsculas.
+  const tagsSel = tags
+    .split(/[\s,]+/)
+    .map((t) => t.replace(/^#+/, "").toLowerCase())
+    .filter(Boolean);
+  const toggleTag = (t: string) =>
+    setTags((tagsSel.includes(t) ? tagsSel.filter((x) => x !== t) : [...tagsSel, t]).join(" "));
+
+  // Al elegir categoría, si no hay etiquetas escritas, propone las del último movimiento de
+  // esa categoría (p. ej. "Café – ventas" → cafe).
+  const elegirCategoria = (id: string) => {
+    setCategoria(id);
+    if (!id || tags.trim()) return;
+    const ultimo = movimientos.find((m) => !m.eliminado && m.categoria === id && m.tags);
+    if (ultimo) setTags(ultimo.tags);
+  };
+
   const cents = parseAmountToCents(monto);
   const montoOk = !Number.isNaN(cents) && cents > 0;
 
@@ -143,6 +172,7 @@ function PanelRegistro({ onCerrar, onGuardado }: { onCerrar: () => void; onGuard
         categoria,
         monto: tipo === "gasto" ? -cents : cents,
         descripcion: descripcion.trim(),
+        tags: tagsSel.join(" "),
       });
       guardarLocal(KEY_CUENTA, cuentaSel);
       const nombre = categorias.find((c) => c.id === categoria)?.nombre ?? "";
@@ -187,7 +217,7 @@ function PanelRegistro({ onCerrar, onGuardado }: { onCerrar: () => void; onGuard
 
         <div className="sheet-chips">
           {frecuentes.map((c) => (
-            <button key={c.id} className={categoria === c.id ? "active" : ""} onClick={() => setCategoria(c.id)}>
+            <button key={c.id} className={categoria === c.id ? "active" : ""} onClick={() => elegirCategoria(c.id)}>
               {c.nombre}
             </button>
           ))}
@@ -195,7 +225,7 @@ function PanelRegistro({ onCerrar, onGuardado }: { onCerrar: () => void; onGuard
         <select
           className="rr-select"
           value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
+          onChange={(e) => elegirCategoria(e.target.value)}
           aria-label="Categoría"
         >
           <option value="">Otra categoría…</option>
@@ -239,6 +269,24 @@ function PanelRegistro({ onCerrar, onGuardado }: { onCerrar: () => void; onGuard
           onChange={(e) => setDescripcion(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && guardar(false)}
         />
+        <input
+          className="rr-desc"
+          value={tags}
+          placeholder="Etiquetas (opcional), ej. cafe"
+          autoCapitalize="none"
+          autoCorrect="off"
+          onChange={(e) => setTags(e.target.value)}
+          aria-label="Etiquetas"
+        />
+        {tagsFrecuentes.length > 0 && (
+          <div className="sheet-chips rr-tags">
+            {tagsFrecuentes.map((t) => (
+              <button key={t} className={tagsSel.includes(t) ? "active" : ""} onClick={() => toggleTag(t)}>
+                #{t}
+              </button>
+            ))}
+          </div>
+        )}
 
         {error && <div className="error">{error}</div>}
         <div className="sheet-actions">

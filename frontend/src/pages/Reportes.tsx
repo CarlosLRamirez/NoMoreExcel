@@ -124,6 +124,7 @@ export function Reportes() {
               <th>Etiqueta</th>
               <th className="num">Gasto ({base})</th>
               <th className="num">Ingreso ({base})</th>
+              <th className="num" title="Ingreso − gasto">Neto</th>
               <th className="num"># mov.</th>
             </tr>
           </thead>
@@ -137,12 +138,15 @@ export function Reportes() {
                 </td>
                 <td className="num neg">{t.gasto ? formatMoney(t.gasto, base) : "—"}</td>
                 <td className="num pos">{t.ingreso ? formatMoney(t.ingreso, base) : "—"}</td>
+                <td className={"num " + (t.ingreso - t.gasto < 0 ? "neg" : "pos")}>
+                  <strong>{formatMoney(t.ingreso - t.gasto, base)}</strong>
+                </td>
                 <td className="num">{t.conteo}</td>
               </tr>
             ))}
             {porTag.length === 0 && (
               <tr>
-                <td colSpan={4} className="muted">
+                <td colSpan={5} className="muted">
                   Sin movimientos etiquetados en el rango. Agrega etiquetas como #viaje en cada movimiento.
                 </td>
               </tr>

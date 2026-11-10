@@ -1316,3 +1316,11 @@ label.ad-cat span:nth-of-type(1) {
     font-size: 20px;
   }
 }
+
+.rr-tags {
+  margin-top: 8px;
+}
+.rr-tags button {
+  min-height: 34px;
+  font-size: 14px;
+}
