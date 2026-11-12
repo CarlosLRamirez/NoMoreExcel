@@ -1324,3 +1324,13 @@ label.ad-cat span:nth-of-type(1) {
   min-height: 34px;
   font-size: 14px;
 }
+
+/* Filtro de grupos en Reportes */
+.rep-grupos button {
+  min-height: 36px;
+  font-size: 14px;
+}
+.rep-grupos button.rep-grupo-off {
+  color: var(--muted);
+  text-decoration: line-through;
+}
