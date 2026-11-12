@@ -5,6 +5,14 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.15.0] - 2026-11-12
+
+### Añadido
+- **Filtro "Grupos en los reportes"** en Reportes: tocar un grupo lo saca de (a) Gasto por
+  categoría y (b) Ingreso vs gasto, para ver el gasto personal real sin, p. ej., un negocio
+  aparte. No afecta el presupuesto ni el reporte (c) por etiqueta. Se recuerda en el
+  dispositivo; "Incluir todos" lo restablece.
+
 ## [1.14.0] - 2026-11-10
 
 ### Añadido

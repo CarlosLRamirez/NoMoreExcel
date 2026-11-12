@@ -10,6 +10,17 @@ const inicioMes = () => {
 };
 const hoy = () => new Date().toISOString().slice(0, 10);
 
+// Grupos que el usuario sacó de los reportes (a) y (b), recordados en este dispositivo.
+const KEY_GRUPOS_EXCL = "nme_rep_grupos_excl";
+const leerExcluidos = (): string[] => {
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY_GRUPOS_EXCL) ?? "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
+
 export function Reportes() {
   const { data: movimientos = [] } = useMovimientos();
   const { data: categorias = [] } = useCategorias();
@@ -18,15 +29,33 @@ export function Reportes() {
   const [desde, setDesde] = useState(inicioMes());
   const [hasta, setHasta] = useState(hoy());
   const [incluirOcultas, setIncluirOcultas] = useState(false);
+  const [gruposExcl, setGruposExcl] = useState<string[]>(leerExcluidos);
+
+  const guardarExcluidos = (next: string[]) => {
+    setGruposExcl(next);
+    try {
+      localStorage.setItem(KEY_GRUPOS_EXCL, JSON.stringify(next));
+    } catch {
+      // sin almacenamiento: el filtro vale solo mientras la página esté abierta
+    }
+  };
+  const toggleGrupo = (id: string) =>
+    guardarExcluidos(gruposExcl.includes(id) ? gruposExcl.filter((x) => x !== id) : [...gruposExcl, id]);
+  // Categorías de los grupos excluidos: se quitan de (a) y (b), no de (c) por etiqueta.
+  const catsExcl = new Set(categorias.filter((c) => gruposExcl.includes(c.grupo)).map((c) => c.id));
+  const movsFiltrados = catsExcl.size ? movimientos.filter((m) => !catsExcl.has(m.categoria)) : movimientos;
+  const gruposConCats = [...grupos]
+    .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+    .filter((g) => categorias.some((c) => c.grupo === g.id));
 
   const base = settings?.moneda_base ?? "GTQ";
-  const reporte = gastoPorGrupo(movimientos, desde, hasta, settings ?? null, grupos, categorias, incluirOcultas);
+  const reporte = gastoPorGrupo(movsFiltrados, desde, hasta, settings ?? null, grupos, categorias, incluirOcultas);
   const maxCat = Math.max(1, ...reporte.flatMap((g) => g.categorias.map((c) => c.total)));
   const totalGeneral = reporte.reduce((a, g) => a + g.total, 0);
   const excluidasIds = new Set(
     incluirOcultas ? [] : categorias.filter((c) => c.excluir_presupuesto).map((c) => c.id)
   );
-  const porMes = ingresoVsGastoPorMes(movimientos, settings ?? null, excluidasIds);
+  const porMes = ingresoVsGastoPorMes(movsFiltrados, settings ?? null, excluidasIds);
   const porTag = totalesPorTag(movimientos, desde, hasta, settings ?? null);
 
   const hayMezcla = new Set(movimientos.filter((m) => !m.eliminado).map((m) => m.moneda)).size > 1;
@@ -43,6 +72,38 @@ export function Reportes() {
           cambio manual USD→GTQ = {settings?.tipo_cambio_usd || "—"} (aproximado).
         </p>
       )}
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Grupos en los reportes</h3>
+        <p className="muted" style={{ marginTop: 0 }}>
+          Toca un grupo para sacarlo de (a) y (b), p. ej. un negocio aparte, y ver tu gasto
+          personal real. No cambia tu presupuesto. Se recuerda en este dispositivo.
+        </p>
+        <div className="sheet-chips rep-grupos">
+          {gruposConCats.map((g) => {
+            const incluido = !gruposExcl.includes(g.id);
+            return (
+              <button
+                key={g.id}
+                className={incluido ? "active" : "rep-grupo-off"}
+                onClick={() => toggleGrupo(g.id)}
+                aria-pressed={incluido}
+              >
+                {incluido ? "✓ " : ""}
+                {g.nombre}
+              </button>
+            );
+          })}
+        </div>
+        {gruposExcl.length > 0 && (
+          <p className="muted" style={{ marginBottom: 0 }}>
+            Excluidos: {gruposExcl.length} grupo(s).{" "}
+            <button className="link" onClick={() => guardarExcluidos([])}>
+              Incluir todos
+            </button>
+          </p>
+        )}
+      </div>
 
       <div className="card">
         <h3>(a) Gasto por categoría (por grupo)</h3>
