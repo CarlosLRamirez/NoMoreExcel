@@ -5,6 +5,24 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.16.0] - 2026-11-21
+
+### Mejorado (móvil)
+- **Movimientos en móvil rediseñado para revisar:** en lugar de la tabla de 8 columnas con
+  scroll horizontal, una lista de tarjetas agrupadas por día ("Hoy", "Ayer", "jue, 19 nov").
+  Cada tarjeta muestra descripción (o categoría), monto, categoría · cuenta y etiquetas.
+  - **Círculo a la izquierda** para confirmar/desconfirmar contra el banco con un toque
+    (🔒 si ya está conciliado).
+  - **Tocar la tarjeta** abre el detalle (fecha, cuenta, categoría, notas, estado, etiquetas)
+    con Marcar confirmado, Editar, Eliminar y, en transferencias, "Ver otra pata".
+  - Atajo **Todos / Sin confirmar (N)** arriba; **Filtros** y **Más acciones (CSV)** plegables.
+  - Se cargan 60 movimientos y "Mostrar más" agrega el resto.
+- Escritorio: sin cambios en la tabla.
+
+### Añadido
+- Filtro **Estado** (Todos / Sin confirmar / Confirmados) en los filtros de Movimientos, en
+  móvil y escritorio.
+
 ## [1.15.0] - 2026-11-12
 
 ### Añadido

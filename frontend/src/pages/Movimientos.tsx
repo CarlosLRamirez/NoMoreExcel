@@ -14,6 +14,8 @@ import {
 } from "../hooks/queries";
 import { Modal } from "../components/Modal";
 import { Combobox } from "../components/Combobox";
+import { MovimientosMovil } from "../components/MovimientosMovil";
+import { useIsMobile } from "../hooks/useMediaQuery";
 import { centsToInput, formatMoney, parseAmountToCents } from "../lib/money";
 import { csvToRows, exportToCsv, exampleCsv } from "../lib/csv";
 import { parseTags, todasLasTags } from "../lib/finance";
@@ -74,6 +76,7 @@ export function Movimientos() {
   const updateTransfer = useUpdateTransfer();
   const importCsv = useImportCsv();
   const fileRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   const cuentaMap = useMemo(() => new Map(cuentas.map((c) => [c.id, c])), [cuentas]);
   const catMap = useMemo(() => new Map(categorias.map((c) => [c.id, c])), [categorias]);
@@ -123,6 +126,7 @@ export function Movimientos() {
   const [fDesde, setFDesde] = useState(searchParams.get("desde") ?? "");
   const [fHasta, setFHasta] = useState(searchParams.get("hasta") ?? "");
   const [fTag, setFTag] = useState(searchParams.get("tag") ?? "");
+  const [fEstado, setFEstado] = useState<"" | "pendiente" | "confirmado">("");
 
   const tagsExistentes = useMemo(() => todasLasTags(movimientos), [movimientos]);
 
@@ -146,7 +150,7 @@ export function Movimientos() {
     localStorage.setItem("mov_show_rec", mostrarRec ? "1" : "0");
   }, [mostrarRec]);
 
-  const baseFiltrados = movimientos.filter((m) => {
+  const sinEstado = movimientos.filter((m) => {
     const f = (m.fecha || "").slice(0, 10);
     if (fCuenta && m.cuenta !== fCuenta) return false;
     if (fCategoria && m.categoria !== fCategoria) return false;
@@ -156,6 +160,12 @@ export function Movimientos() {
     if (fTag && !parseTags(m.tags).includes(fTag)) return false;
     return true;
   });
+  // Estado de revisión: "pendiente" = aún no confirmado contra el banco (conciliado=false).
+  const pendientes = sinEstado.filter((m) => !m.conciliado).length;
+  const baseFiltrados = fEstado
+    ? sinEstado.filter((m) => (fEstado === "pendiente") === !m.conciliado)
+    : sinEstado;
+  const filtrosActivos = [fCuenta, fCategoria, fTipo, fDesde, fHasta, fTag, fEstado].filter(Boolean).length;
   const filtrados = mostrarRec ? baseFiltrados : baseFiltrados.filter((m) => !m.reconciliado);
   const ocultosReconciliados = baseFiltrados.length - filtrados.length;
 
@@ -467,6 +477,31 @@ export function Movimientos() {
     <div>
       <div className="page-head">
         <h2>Movimientos</h2>
+        {isMobile ? (
+          <div className="mv-acciones">
+            <button onClick={nuevaTransfer}>+ Transferencia</button>
+            <button className="primary" onClick={nuevoMov}>
+              + Movimiento
+            </button>
+            <details className="bm-acciones">
+              <summary>Más acciones (CSV)</summary>
+              <div>
+                <button onClick={onExampleCsv} title="Descarga una plantilla con el formato esperado">
+                  CSV de ejemplo
+                </button>
+                <button onClick={onExport}>Exportar CSV</button>
+                <button onClick={() => fileRef.current?.click()}>Importar CSV</button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  style={{ display: "none" }}
+                  onChange={(e) => e.target.files?.[0] && onImportFile(e.target.files[0])}
+                />
+              </div>
+            </details>
+          </div>
+        ) : (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button onClick={onExampleCsv} title="Descarga una plantilla con el formato esperado">
             CSV de ejemplo
@@ -485,6 +520,7 @@ export function Movimientos() {
             + Movimiento
           </button>
         </div>
+        )}
       </div>
 
       {importRes && (
@@ -510,6 +546,21 @@ export function Movimientos() {
         </div>
       )}
 
+      {isMobile && (
+        <div className="mv-resumen">
+          <div className="segmented">
+            <button className={fEstado === "" ? "active" : ""} onClick={() => setFEstado("")}>
+              Todos
+            </button>
+            <button className={fEstado === "pendiente" ? "active" : ""} onClick={() => setFEstado("pendiente")}>
+              Sin confirmar ({pendientes})
+            </button>
+          </div>
+        </div>
+      )}
+
+      <details className="filtros-wrap" open={!isMobile}>
+        <summary>Filtros{filtrosActivos > 0 ? ` (${filtrosActivos})` : ""}</summary>
       <div className="toolbar">
         <div className="field">
           <label>Cuenta</label>
@@ -540,6 +591,14 @@ export function Movimientos() {
             <option value="ingreso">Ingreso</option>
             <option value="gasto">Gasto</option>
             <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>Estado</label>
+          <select value={fEstado} onChange={(e) => setFEstado(e.target.value as "" | "pendiente" | "confirmado")}>
+            <option value="">Todos</option>
+            <option value="pendiente">Sin confirmar</option>
+            <option value="confirmado">Confirmados</option>
           </select>
         </div>
         {tagsExistentes.length > 0 && (
@@ -577,7 +636,24 @@ export function Movimientos() {
           </label>
         </div>
       </div>
+      </details>
 
+      {isMobile ? (
+        <MovimientosMovil
+          movs={filtrados}
+          cuentaMap={cuentaMap}
+          catMap={catMap}
+          flujo={transferFlow}
+          highlightId={highlightId}
+          onToggle={(id, conciliado) => toggle.mutate({ id, conciliado })}
+          onEdit={(m) => (m.tipo === "transferencia" ? editarTransfer(m) : editarMov(m))}
+          onDelete={(m) => {
+            if (confirm("¿Eliminar este movimiento? (soft delete)")) delMov.mutate(m.id);
+          }}
+          onJump={jumpToSibling}
+          onTag={setFTag}
+        />
+      ) : (
       <table className="resizable">
         <colgroup>
           {widths.map((w, i) => (
@@ -698,6 +774,7 @@ export function Movimientos() {
           )}
         </tbody>
       </table>
+      )}
 
       {/* Modal Movimiento (ingreso/gasto) */}
       {movForm && (
