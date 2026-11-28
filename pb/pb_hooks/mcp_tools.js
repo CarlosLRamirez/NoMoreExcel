@@ -10,189 +10,24 @@
 //  - Escritura en dos pasos: vista previa (por defecto) y luego confirmar=true.
 //  - Guardar pasa por los hooks de movimientos.pb.js (moneda, signo, tc_base, etiquetas).
 
+const {
+  fallo,
+  norm,
+  centsToStr,
+  decimalToCents,
+  hoy,
+  fechaValida,
+  rango,
+  convertir,
+  parseTags,
+  normalizarEtiquetas,
+  cargarContexto,
+  movimientosEnRango,
+  aFila,
+  resolver,
+} = require(`${__hooks}/mcp_util.js`);
+
 const MAX_ITEMS = 25;
-const ACENTOS = { á: "a", é: "e", í: "i", ó: "o", ú: "u", ü: "u", ñ: "n" };
-
-// ---------------------------------------------------------------- utilidades
-
-// Error "esperado" de una herramienta: se devuelve al modelo como isError, sin tumbar la ruta.
-const fallo = (mensaje) => ({ toolError: mensaje });
-
-const norm = (s) =>
-  String(s === undefined || s === null ? "" : s)
-    .toLowerCase()
-    .replace(/[áéíóúüñ]/g, (c) => ACENTOS[c])
-    .trim();
-
-const centsToStr = (c) => {
-  const neg = c < 0;
-  const a = Math.abs(c);
-  return (neg ? "-" : "") + Math.floor(a / 100) + "." + String(a % 100).padStart(2, "0");
-};
-
-// Monto decimal -> centavos enteros, solo aritmética entera (mismo criterio que /api/import).
-const decimalToCents = (raw) => {
-  if (raw === undefined || raw === null) throw "monto vacío";
-  let s = String(raw).trim();
-  if (s === "") throw "monto vacío";
-  let neg = false;
-  if (s.charAt(0) === "(" && s.charAt(s.length - 1) === ")") {
-    neg = true;
-    s = s.slice(1, -1);
-  }
-  s = s.replace(/[^0-9.+-]/g, "");
-  if (s.charAt(0) === "-") {
-    neg = !neg;
-    s = s.slice(1);
-  } else if (s.charAt(0) === "+") {
-    s = s.slice(1);
-  }
-  if (!/^\d+(\.\d+)?$/.test(s)) throw "monto inválido: " + raw;
-  const parts = s.split(".");
-  let frac = parts[1] || "";
-  if (frac.length > 2) throw "monto con más de 2 decimales: " + raw;
-  frac = (frac + "00").slice(0, 2);
-  const cents = parseInt(parts[0], 10) * 100 + parseInt(frac, 10);
-  return neg ? -cents : cents;
-};
-
-// Fecha de hoy en la zona del usuario (el servidor corre en UTC; Guatemala = UTC-6).
-const hoy = () => {
-  const off = parseInt($os.getenv("MCP_TZ_OFFSET_HOURS") || "-6", 10);
-  return new Date(Date.now() + off * 3600 * 1000).toISOString().slice(0, 10);
-};
-
-const fechaValida = (s) => {
-  if (typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
-  const d = new Date(s + "T00:00:00Z");
-  return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
-};
-
-const inicioMes = (ymd) => ymd.slice(0, 8) + "01";
-
-// Valida un rango opcional; por defecto: del 1 del mes en curso a hoy.
-const rango = (desde, hasta) => {
-  const d = desde || inicioMes(hoy());
-  const h = hasta || hoy();
-  if (!fechaValida(d)) throw fallo("desde debe ser una fecha YYYY-MM-DD válida");
-  if (!fechaValida(h)) throw fallo("hasta debe ser una fecha YYYY-MM-DD válida");
-  if (d > h) throw fallo("desde no puede ser posterior a hasta");
-  return { desde: d, hasta: h };
-};
-
-// Conversión a moneda base con el tipo de cambio manual, igual que convertCents() de la app.
-const convertir = (cents, de, base, tc) => {
-  if (de === base) return cents;
-  if (de === "USD" && base === "GTQ") return Math.round(cents * tc);
-  if (de === "GTQ" && base === "USD") return tc > 0 ? Math.round(cents / tc) : 0;
-  return cents;
-};
-
-const parseTags = (t) =>
-  String(t || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-// ---------------------------------------------------------------- datos del usuario
-
-const cargarContexto = (userId) => {
-  const p = { u: userId };
-  const cuentas = $app.findRecordsByFilter("cuentas", "usuario = {:u}", "nombre", 0, 0, p).map((r) => ({
-    id: r.id,
-    nombre: r.getString("nombre"),
-    tipo: r.getString("tipo"),
-    moneda: r.getString("moneda"),
-    activa: r.getBool("activa"),
-    saldoInicial: r.getInt("saldo_inicial"),
-  }));
-  const grupos = $app.findRecordsByFilter("grupos", "usuario = {:u}", "orden", 0, 0, p).map((r) => ({
-    id: r.id,
-    nombre: r.getString("nombre"),
-  }));
-  const nombreGrupo = {};
-  grupos.forEach((g) => (nombreGrupo[g.id] = g.nombre));
-  const categorias = $app.findRecordsByFilter("categorias", "usuario = {:u}", "orden,nombre", 0, 0, p).map((r) => ({
-    id: r.id,
-    nombre: r.getString("nombre"),
-    tipo: r.getString("tipo"),
-    grupoId: r.getString("grupo"),
-    grupo: nombreGrupo[r.getString("grupo")] || "",
-    activa: r.getBool("activa"),
-    excluida: r.getBool("excluir_presupuesto"),
-  }));
-  let monedaBase = "GTQ";
-  let tc = 0;
-  try {
-    const s = $app.findFirstRecordByFilter("settings", "usuario = {:u}", p);
-    monedaBase = s.getString("moneda_base") || "GTQ";
-    tc = s.getFloat("tipo_cambio_usd");
-  } catch (_) {}
-  const porId = (lista) => {
-    const m = {};
-    lista.forEach((x) => (m[x.id] = x));
-    return m;
-  };
-  return {
-    userId,
-    cuentas,
-    categorias,
-    grupos,
-    cuentaPorId: porId(cuentas),
-    categoriaPorId: porId(categorias),
-    monedaBase,
-    tc,
-  };
-};
-
-// Movimientos NO eliminados en un rango de fechas (ambos extremos incluidos).
-const movimientosEnRango = (userId, desde, hasta, extraFiltro, extraParams) => {
-  const params = { u: userId, d: desde, h: hasta + " 23:59:59.999Z" };
-  for (const k in extraParams || {}) params[k] = extraParams[k];
-  return $app.findRecordsByFilter(
-    "movimientos",
-    "usuario = {:u} && eliminado = false && fecha >= {:d} && fecha <= {:h}" + (extraFiltro ? " && " + extraFiltro : ""),
-    "-fecha,-created",
-    0,
-    0,
-    params
-  );
-};
-
-const aFila = (r, ctx) => {
-  const cuenta = ctx.cuentaPorId[r.getString("cuenta")];
-  const cat = ctx.categoriaPorId[r.getString("categoria")];
-  return {
-    id: r.id,
-    fecha: r.getString("fecha").slice(0, 10),
-    tipo: r.getString("tipo"),
-    monto: centsToStr(r.getInt("monto")),
-    moneda: r.getString("moneda"),
-    cuenta: cuenta ? cuenta.nombre : null,
-    categoria: cat ? cat.nombre : null,
-    descripcion: r.getString("descripcion"),
-    etiquetas: parseTags(r.getString("tags")),
-    confirmado: r.getBool("conciliado"),
-  };
-};
-
-// Resuelve una cuenta/categoría por id o nombre (sin acentos ni mayúsculas, coincidencia exacta
-// o por subcadena única). Devuelve { ok } o { error, candidatos }.
-const resolver = (lista, ref, filtro, etiqueta) => {
-  const q = norm(ref);
-  if (!q) return { error: etiqueta + " vacía" };
-  const pool = lista.filter(filtro);
-  const nombres = (arr) => arr.map((x) => x.nombre);
-  const porId = pool.filter((x) => x.id === String(ref).trim());
-  if (porId.length === 1) return { ok: porId[0] };
-  const exacta = pool.filter((x) => norm(x.nombre) === q);
-  if (exacta.length === 1) return { ok: exacta[0] };
-  if (exacta.length > 1) return { error: etiqueta + " ambigua", candidatos: nombres(exacta) };
-  const parcial = pool.filter((x) => norm(x.nombre).indexOf(q) !== -1);
-  if (parcial.length === 1) return { ok: parcial[0] };
-  if (parcial.length > 1) return { error: etiqueta + " ambigua", candidatos: nombres(parcial).slice(0, 8) };
-  return { error: etiqueta + ' no encontrada: "' + ref + '"', candidatos: nombres(pool).slice(0, 12) };
-};
 
 // ---------------------------------------------------------------- herramientas
 
@@ -252,7 +87,11 @@ const buscar_movimientos = (args, userId) => {
   }
   const texto = norm(args.texto || "");
   const etiqueta = norm(args.etiqueta || "").replace(/^#+/, "");
-  const filas = movimientosEnRango(userId, r.desde, r.hasta).filter((m) => {
+  if (args.estado !== undefined && ["sin_confirmar", "confirmado"].indexOf(args.estado) === -1) {
+    throw fallo('estado debe ser "sin_confirmar" o "confirmado"');
+  }
+  const filas = movimientosEnRango(userId, r.desde, r.hasta, "", {}, args.solo_eliminados === true).filter((m) => {
+    if (args.estado && (args.estado === "confirmado") !== m.getBool("conciliado")) return false;
     if (cuentaId && m.getString("cuenta") !== cuentaId) return false;
     if (categoriaId && m.getString("categoria") !== categoriaId) return false;
     if (args.tipo && m.getString("tipo") !== args.tipo) return false;
@@ -361,7 +200,7 @@ const registrar_movimientos = (args, userId) => {
     }
     fila.descripcion = String(it.descripcion || "").trim();
     if (fila.descripcion.length > 500) err("la descripción excede 500 caracteres");
-    fila.etiquetas = parseTags(String(it.etiquetas || "").replace(/[,#]/g, " "));
+    fila.etiquetas = normalizarEtiquetas(it.etiquetas);
     if (fila.etiquetas.join(" ").length > 500) err("las etiquetas exceden 500 caracteres");
     return fila;
   });
@@ -494,7 +333,7 @@ const TOOLS = [
   {
     name: "buscar_movimientos",
     description:
-      "Busca movimientos (no eliminados), del más reciente al más antiguo. Todos los filtros son opcionales. Cuenta y categoría aceptan el nombre. Úsala para revisar lo registrado o detectar duplicados.",
+      "Busca movimientos (por defecto los vigentes), del más reciente al más antiguo; cada uno trae su id, si está confirmado y si está bloqueado (conciliado, no editable). Todos los filtros son opcionales; cuenta y categoría aceptan el nombre. Úsala para revisar lo registrado, detectar duplicados o encontrar el id de un movimiento a corregir o eliminar.",
     inputSchema: {
       type: "object",
       properties: {
@@ -505,6 +344,8 @@ const TOOLS = [
         tipo: { type: "string", enum: ["gasto", "ingreso", "transferencia"] },
         texto: { type: "string", description: "Texto contenido en la descripción." },
         etiqueta: { type: "string", description: "Etiqueta, sin #." },
+        estado: { type: "string", enum: ["sin_confirmar", "confirmado"], description: "sin_confirmar = aún no verificado contra el banco." },
+        solo_eliminados: { type: "boolean", description: "Lista los eliminados (para restaurarlos) en lugar de los vigentes." },
         limite: { type: "integer", minimum: 1, maximum: 100, description: "Máximo de filas (por defecto 20)." },
       },
       additionalProperties: false,

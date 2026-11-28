@@ -249,7 +249,7 @@ Una transferencia normal hacia la cuenta del préstamo (desde Movimientos) tambi
 
 ## Conectar con Claude (servidor MCP)
 
-La app incluye un servidor **MCP** (`POST /api/mcp`, en `pb/pb_hooks/mcp.pb.js` y `mcp_tools.js`) para consultar y registrar movimientos hablando con Claude (web o app del teléfono): *"gasté Q10 en efectivo en la tienda"*, *"¿cuánto llevo este mes en medicamentos?"*, o mandarle la foto de una factura o un pantallazo del banco. Claude lee la imagen y llama a las herramientas con datos ya estructurados; el servidor no hace OCR.
+La app incluye un servidor **MCP** (`POST /api/mcp`, en `pb/pb_hooks/mcp.pb.js` y los módulos `mcp_*.js`) para consultar y manejar tus finanzas hablando con Claude (web o app del teléfono): *"gasté Q10 en efectivo en la tienda"*, *"¿cuánto llevo este mes en medicamentos?"*, *"asigna lo que me sobra a Fondo de emergencia"*, *"paga la cuota del carro"*, o mandarle la foto de una factura o un pantallazo del banco. Claude lee la imagen y llama a las herramientas con datos ya estructurados; el servidor no hace OCR.
 
 **Está apagado hasta que lo configuras** (responde 404 sin las dos variables siguientes) y no cuesta nada extra: corre dentro de la misma app de Fly.
 
@@ -270,28 +270,57 @@ En Claude: **Conectores → Agregar conector personalizado**
 - **Encabezados de solicitud → Agregar encabezado:** nombre `Authorization`, valor `Bearer <tu token>` (Claude envía el valor tal cual, escribe "Bearer " con el espacio)
 - Transporte: *HTTP transmisible* (el predeterminado)
 
-### Herramientas
+### Herramientas (20)
+
+**Consultar**
 
 | Herramienta | Qué hace |
 |---|---|
-| `listar_cuentas` | Cuentas con su saldo actual (y la deuda de los préstamos) |
-| `listar_categorias` | Categorías con su grupo |
-| `buscar_movimientos` | Busca por fechas, cuenta, categoría, texto o etiqueta |
+| `resumen_mes` | Vistazo: patrimonio neto, **disponible para asignar**, ingresos y gastos del mes, categorías sobregastadas |
+| `resumen_presupuesto` | Por grupo y categoría: asignado, gastado y disponible acumulado (incluye los abonos a préstamos) |
+| `listar_cuentas` / `listar_categorias` | Cuentas con saldo (y deuda de préstamos) / categorías con su grupo |
+| `buscar_movimientos` | Por fechas, cuenta, categoría, texto, etiqueta o `estado=sin_confirmar`; trae el `id`, si está confirmado y si está bloqueado. `solo_eliminados` lista los eliminados |
 | `gasto_por_categoria` | Gasto real por grupo/categoría en un rango (por defecto, mes en curso); `excluir_grupos` deja fuera, p. ej., un negocio aparte |
-| `registrar_movimientos` | Registra gastos/ingresos **en dos pasos**: vista previa (resuelve cuenta y categoría por nombre, avisa de errores y de **posibles duplicados**) y luego `confirmar=true`. Todo o nada; los duplicados se omiten salvo `permitir_duplicados` |
+| `ingreso_vs_gasto` | Ingreso, gasto y neto de los últimos N meses (también con `excluir_grupos`) |
+| `totales_por_etiqueta` | Ingreso, gasto y **neto por etiqueta**: la ganancia de `#cafe`, de un viaje, etc. |
 
-Los guardados pasan por los mismos hooks que la app (moneda de la cuenta, signo, `tc_base`, etiquetas) y quedan **sin confirmar** (`conciliado=false`) para que los revises contra el banco. Las fechas por defecto usan la zona UTC-6 (`MCP_TZ_OFFSET_HOURS` para cambiarla).
+**Registrar y corregir** (todas en dos pasos: vista previa y luego `confirmar=true`)
+
+| Herramienta | Qué hace |
+|---|---|
+| `registrar_movimientos` | Gastos/ingresos, con cuenta y categoría por nombre, aviso de **posibles duplicados** y todo o nada |
+| `registrar_transferencia` | Entre cuentas propias, también en monedas distintas con `tipo_cambio`; crea las dos patas igual que `POST /api/transfers` |
+| `editar_movimiento` | Corrige fecha, monto, cuenta, categoría, descripción, etiquetas o notas; muestra antes y después |
+| `eliminar_movimientos` | Eliminación **lógica** (como el botón de la app), con la pareja de una transferencia |
+| `restaurar_movimientos` | Deshace una eliminación |
+| `marcar_movimientos_confirmados` | Marca o desmarca como "ya verificado contra el banco" (sin bloquear nada) |
+
+**Presupuesto, préstamos y catálogos** (en dos pasos)
+
+| Herramienta | Qué hace |
+|---|---|
+| `asignar_presupuesto` | Asigna a categorías de gasto (`fijar` o `sumar`), con el antes/después de cada una y del dinero disponible |
+| `cubrir_sobregastos` | Sube lo asignado solo en las categorías en negativo, lo justo para dejarlas en 0 |
+| `copiar_presupuesto` | Copia el presupuesto del mes anterior al mes indicado |
+| `pagar_cuota_prestamo` | Separa capital (transferencia al préstamo) e interés (gasto en la categoría de pago); no deja abonar más que la deuda |
+| `crear_cuenta` / `crear_categoria` | Crea una cuenta (no préstamos) o una categoría, en un grupo que ya exista |
+
+Los guardados pasan por los mismos hooks que la app (moneda de la cuenta, signo, `tc_base`, etiquetas). Lo que se registra queda **sin confirmar** (`conciliado=false`) para que lo revises contra el banco. Editar el monto o la cuenta de un movimiento ya confirmado lo deja otra vez sin confirmar. Las fechas por defecto usan la zona UTC-6 (`MCP_TZ_OFFSET_HOURS` para cambiarla).
+
+**Los números coinciden con los de la app:** los cálculos (patrimonio, disponible para asignar, saldo por categoría, reportes) están en `pb/pb_hooks/mcp_calculos.js`, un port de `frontend/src/lib/finance.ts`. `node scripts/mcp-paridad.mjs` compara ambos con miles de casos aleatorios; si cambias uno, cambia el otro y corre ese script.
 
 ### Seguridad
 
-- El token da acceso **solo a estas herramientas** y solo a los datos del usuario `MCP_USER_EMAIL`. No existe ninguna para borrar, resetear, exportar la base ni importar CSV.
-- En el teléfono no marques *Permitir siempre* para `registrar_movimientos`, y desactiva en esa conversación los conectores que no uses: lo que devuelve cualquier conector puede intentar dar instrucciones al modelo (p. ej. texto dentro de una factura).
+- El token da acceso **solo a estas herramientas** y solo a los datos del usuario `MCP_USER_EMAIL`. Con él se puede **leer todo tu historial** y **crear, corregir y eliminar movimientos y presupuesto**.
+- **No existe** ninguna herramienta para resetear, exportar la base, importar CSV, conciliar (bloquear) ni borrar de forma definitiva. Eliminar es lógico (se deshace con `restaurar_movimientos`) y los movimientos **bloqueados** (conciliados con el banco) no se pueden editar ni eliminar desde aquí.
+- Lo que cambia datos pide **vista previa y `confirmar=true`**, pero eso lo respeta el modelo: el servidor no obliga a que haya una persona en medio. La barrera real es el token.
+- En el teléfono no marques *Permitir siempre* en las herramientas que cambian datos, y desactiva en esa conversación los conectores que no uses: lo que devuelve cualquier conector puede intentar dar instrucciones al modelo (p. ej. texto dentro de una factura).
 - Rotar el token: `fly secrets set MCP_TOKEN=<nuevo>` y quitar y volver a agregar el conector (Claude no deja editar los encabezados). Apagarlo: `fly secrets unset MCP_TOKEN`.
 - No hay límite de peticiones por minuto; si quieres uno, PocketBase trae *Rate limiting* en el panel admin (Settings).
 
-### Alcance del MVP
+### Qué no incluye
 
-Todavía no hay: transferencias, presupuesto / "disponible para asignar", editar ni borrar movimientos (se hace en la app). Verificación: `scripts/mcp-smoke.mjs`.
+Conciliar cuentas, crear préstamos o grupos, editar o borrar cuentas y categorías, el tipo de cambio de Ajustes, y exportar, importar o resetear: se hace en la app. Verificación: `scripts/mcp-smoke.mjs` (nunca escribe) y `scripts/mcp-paridad.mjs`.
 
 ## Backup y empezar de cero
 

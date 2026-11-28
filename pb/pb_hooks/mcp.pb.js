@@ -14,8 +14,10 @@
 //   MCP_USER_EMAIL   correo del usuario de la app sobre cuyos datos opera el token.
 // Opcional: MCP_TZ_OFFSET_HOURS (por defecto -6, Guatemala) para calcular "hoy".
 //
-// Las herramientas viven en mcp_tools.js. No existe ninguna para borrar, resetear,
-// exportar la base ni importar.
+// Las herramientas viven en mcp_catalogo.js (que reúne los módulos mcp_tools*.js). Todo lo que
+// cambia datos pide vista previa y confirmar=true. NO existe ninguna para resetear, exportar la
+// base, importar CSV, conciliar (bloquear) ni borrar de forma definitiva: eliminar movimientos
+// es lógico (como en la app) y se deshace con restaurar_movimientos.
 //
 // NOTA: en PocketBase los handlers corren en un runtime aislado y no ven el scope del módulo,
 // por eso todo va DENTRO del handler.
@@ -53,11 +55,14 @@ routerAdd("POST", "/api/mcp", (e) => {
   const SUPPORTED = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
   const INSTRUCCIONES =
     "Esta app lleva las finanzas personales del usuario (cuentas, categorías, movimientos y presupuesto). " +
-    "Responde en español. Para registrar movimientos usa siempre registrar_movimientos en dos pasos: " +
-    "primero la vista previa, enséñasela al usuario y guarda (confirmar=true) solo si la aprueba. " +
-    "Nunca inventes montos, cuentas ni categorías: si falta algo o es ambiguo, pregunta. " +
+    "Responde en español. Las herramientas que cambian datos funcionan en dos pasos: primero la vista previa " +
+    "(sin 'confirmar'), enséñasela al usuario y llama con confirmar=true solo si la aprueba. " +
+    "Nunca inventes montos, cuentas, categorías ni ids: si falta algo o es ambiguo, pregunta; para corregir o eliminar " +
+    "un movimiento primero búscalo (buscar_movimientos) y usa su id. " +
+    "Los montos van en positivo; el tipo (gasto o ingreso) define el signo. Mover dinero entre cuentas propias es una " +
+    "transferencia (registrar_transferencia), no un gasto; los pagos de préstamos usan pagar_cuota_prestamo. " +
     "Al leer una factura o captura, copia fecha, monto y comercio tal cual aparecen y avisa si algo no se lee bien. " +
-    "Los montos van en positivo; el tipo (gasto o ingreso) define el signo.";
+    "Los movimientos bloqueados (conciliados con el banco) no se pueden editar ni eliminar desde aquí.";
 
   const rpcError = (id, code, message) => ({ jsonrpc: "2.0", id: id, error: { code: code, message: message } });
   const rpcOk = (id, result) => ({ jsonrpc: "2.0", id: id, result: result });
@@ -78,14 +83,14 @@ routerAdd("POST", "/api/mcp", (e) => {
         return rpcOk(msg.id, {
           protocolVersion: SUPPORTED.indexOf(pedida) !== -1 ? pedida : SUPPORTED[1],
           capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: "nomoreexcel", title: "NoMoreExcel", version: "0.1.0" },
+          serverInfo: { name: "nomoreexcel", title: "NoMoreExcel", version: "0.2.0" },
           instructions: INSTRUCCIONES,
         });
       }
       case "ping":
         return rpcOk(msg.id, {});
       case "tools/list": {
-        const tools = require(`${__hooks}/mcp_tools.js`).TOOLS;
+        const tools = require(`${__hooks}/mcp_catalogo.js`).TOOLS;
         return rpcOk(msg.id, {
           tools: tools.map((t) => ({
             name: t.name,
@@ -97,7 +102,7 @@ routerAdd("POST", "/api/mcp", (e) => {
         });
       }
       case "tools/call": {
-        const tools = require(`${__hooks}/mcp_tools.js`).TOOLS;
+        const tools = require(`${__hooks}/mcp_catalogo.js`).TOOLS;
         const tool = tools.filter((t) => t.name === params.name)[0];
         if (!tool) return rpcError(msg.id, -32602, "herramienta desconocida: " + params.name);
         const args = params.arguments && typeof params.arguments === "object" ? params.arguments : {};
