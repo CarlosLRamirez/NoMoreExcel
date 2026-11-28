@@ -5,6 +5,28 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.18.0] - 2026-11-28
+
+### Añadido
+- **El servidor MCP cubre ahora el resto de la app: 20 herramientas** (antes 5).
+  - **Consultar:** `resumen_mes` (patrimonio, disponible para asignar, ingresos/gastos del mes),
+    `resumen_presupuesto`, `ingreso_vs_gasto`, `totales_por_etiqueta` (p. ej. la ganancia de `#cafe`).
+    `buscar_movimientos` suma `estado=sin_confirmar`, `solo_eliminados` y el `id` y estado de cada uno.
+  - **Registrar y corregir:** `registrar_transferencia` (también multimoneda), `editar_movimiento`,
+    `eliminar_movimientos` (lógico, con la pareja de una transferencia), `restaurar_movimientos` y
+    `marcar_movimientos_confirmados`.
+  - **Presupuesto:** `asignar_presupuesto` (fijar o sumar), `cubrir_sobregastos`, `copiar_presupuesto`.
+  - **Préstamos y catálogos:** `pagar_cuota_prestamo`, `crear_cuenta`, `crear_categoria`.
+  - Todo lo que cambia datos pide vista previa y `confirmar=true`. Los movimientos bloqueados
+    (conciliados) no se editan ni eliminan; no hay herramientas para conciliar, resetear, exportar ni importar.
+- `pb/pb_hooks/mcp_calculos.js`: port de `finance.ts` para que Claude vea los mismos números que la
+  app, con `scripts/mcp-paridad.mjs` (miles de casos aleatorios contra `finance.ts`).
+
+### Cambiado
+- El código del MCP se divide en módulos (`mcp_util.js`, `mcp_tools*.js`, `mcp_catalogo.js`).
+- Las etiquetas de la vista previa de `registrar_movimientos` salen ya normalizadas, como se guardan.
+- `scripts/mcp-smoke.mjs` cubre las 20 herramientas y sigue sin escribir nada.
+
 ## [1.17.0] - 2026-11-28
 
 ### Añadido
