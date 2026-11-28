@@ -5,6 +5,23 @@ Todas las versiones notables de NoMoreExcel.
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/)
 y el proyecto usa [SemVer](https://semver.org/lang/es/).
 
+## [1.17.0] - 2026-11-28
+
+### Añadido
+- **Servidor MCP (MVP)** en `POST /api/mcp` (hooks `mcp.pb.js` + `mcp_tools.js`): permite que
+  Claude (web o app del teléfono) consulte y registre movimientos, incluso desde la foto de una
+  factura o un pantallazo del banco. Sin segundo servicio ni costo extra: corre dentro de la
+  misma app.
+  - Herramientas: `listar_cuentas`, `listar_categorias`, `buscar_movimientos`,
+    `gasto_por_categoria` y `registrar_movimientos` (vista previa → `confirmar=true`, todo o
+    nada, aviso de posibles duplicados, cuenta/categoría por nombre sin acentos).
+  - **Apagado por defecto** (404) hasta definir `MCP_TOKEN` (≥ 32 caracteres) y
+    `MCP_USER_EMAIL`; autenticación `Authorization: Bearer`, comparación en tiempo constante.
+  - Sin herramientas para borrar, resetear, exportar ni importar. Aislado al usuario del token.
+  - `scripts/mcp-smoke.mjs`: verificación sin dependencias que nunca escribe. Guía de
+    configuración en el README ("Conectar con Claude").
+  - Pendiente: transferencias, presupuesto/disponible, editar y borrar.
+
 ## [1.16.0] - 2026-11-21
 
 ### Mejorado (móvil)

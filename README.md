@@ -247,6 +247,52 @@ Para guardar dinero hacia una meta: crea una categoría (ej. "Vacaciones") y **a
 
 Una transferencia normal hacia la cuenta del préstamo (desde Movimientos) también cuenta como pago a capital en el presupuesto.
 
+## Conectar con Claude (servidor MCP)
+
+La app incluye un servidor **MCP** (`POST /api/mcp`, en `pb/pb_hooks/mcp.pb.js` y `mcp_tools.js`) para consultar y registrar movimientos hablando con Claude (web o app del teléfono): *"gasté Q10 en efectivo en la tienda"*, *"¿cuánto llevo este mes en medicamentos?"*, o mandarle la foto de una factura o un pantallazo del banco. Claude lee la imagen y llama a las herramientas con datos ya estructurados; el servidor no hace OCR.
+
+**Está apagado hasta que lo configuras** (responde 404 sin las dos variables siguientes) y no cuesta nada extra: corre dentro de la misma app de Fly.
+
+### Configurar
+
+```bash
+# 1) Un token aleatorio (mínimo 32 caracteres) y el correo de TU usuario de la app
+TOKEN=$(openssl rand -hex 32); echo $TOKEN
+fly secrets set MCP_TOKEN=$TOKEN MCP_USER_EMAIL=tu@correo.com -a nomoreexcel   # reinicia la app
+
+# 2) Comprobar (solo lee y pide una vista previa; no escribe nada)
+MCP_TOKEN=$TOKEN node scripts/mcp-smoke.mjs https://nomoreexcel.fly.dev/api/mcp
+```
+
+En Claude: **Conectores → Agregar conector personalizado**
+- **URL:** `https://nomoreexcel.fly.dev/api/mcp`
+- **Autenticación:** *Sin inicio de sesión*
+- **Encabezados de solicitud → Agregar encabezado:** nombre `Authorization`, valor `Bearer <tu token>` (Claude envía el valor tal cual, escribe "Bearer " con el espacio)
+- Transporte: *HTTP transmisible* (el predeterminado)
+
+### Herramientas
+
+| Herramienta | Qué hace |
+|---|---|
+| `listar_cuentas` | Cuentas con su saldo actual (y la deuda de los préstamos) |
+| `listar_categorias` | Categorías con su grupo |
+| `buscar_movimientos` | Busca por fechas, cuenta, categoría, texto o etiqueta |
+| `gasto_por_categoria` | Gasto real por grupo/categoría en un rango (por defecto, mes en curso); `excluir_grupos` deja fuera, p. ej., un negocio aparte |
+| `registrar_movimientos` | Registra gastos/ingresos **en dos pasos**: vista previa (resuelve cuenta y categoría por nombre, avisa de errores y de **posibles duplicados**) y luego `confirmar=true`. Todo o nada; los duplicados se omiten salvo `permitir_duplicados` |
+
+Los guardados pasan por los mismos hooks que la app (moneda de la cuenta, signo, `tc_base`, etiquetas) y quedan **sin confirmar** (`conciliado=false`) para que los revises contra el banco. Las fechas por defecto usan la zona UTC-6 (`MCP_TZ_OFFSET_HOURS` para cambiarla).
+
+### Seguridad
+
+- El token da acceso **solo a estas herramientas** y solo a los datos del usuario `MCP_USER_EMAIL`. No existe ninguna para borrar, resetear, exportar la base ni importar CSV.
+- En el teléfono no marques *Permitir siempre* para `registrar_movimientos`, y desactiva en esa conversación los conectores que no uses: lo que devuelve cualquier conector puede intentar dar instrucciones al modelo (p. ej. texto dentro de una factura).
+- Rotar el token: `fly secrets set MCP_TOKEN=<nuevo>` y quitar y volver a agregar el conector (Claude no deja editar los encabezados). Apagarlo: `fly secrets unset MCP_TOKEN`.
+- No hay límite de peticiones por minuto; si quieres uno, PocketBase trae *Rate limiting* en el panel admin (Settings).
+
+### Alcance del MVP
+
+Todavía no hay: transferencias, presupuesto / "disponible para asignar", editar ni borrar movimientos (se hace en la app). Verificación: `scripts/mcp-smoke.mjs`.
+
 ## Backup y empezar de cero
 
 En **Ajustes → Backup y empezar de cero**:
